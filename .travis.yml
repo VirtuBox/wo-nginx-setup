@@ -1,0 +1,15 @@
+language: bash
+
+dist: xenial
+
+before_install:
+  - rm -rf ~/.gnupg
+
+before_script:
+  - sudo apt-get -qq autoremove
+  - sudo apt-get update -q
+
+script:
+  - lsb_release -a
+  - sudo echo "Travis Banch = $TRAVIS_BRANCH"
+  - sudo bash wo-nginx-setup.sh $TRAVIS_BRANCH
