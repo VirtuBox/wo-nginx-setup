@@ -521,6 +521,7 @@ if [ -z "$WO_PREVIOUS_INSTALL" ]; then
         chmod +x wo
         ./wo
         source /etc/bash_completion.d/wo_auto.rc
+        rm wo
 
     fi
 
