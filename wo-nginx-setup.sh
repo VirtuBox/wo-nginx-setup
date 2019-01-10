@@ -60,7 +60,18 @@ fi
 # Arguments Parsing
 ##################################
 
-
+while [ "${#}" -gt 0 ]; do
+    case "${1}" in
+    --remote-mysql)
+        MYSQL_CLIENT="1"
+        ;;
+    -i | --interactive)
+        INTERACTIVE_SETUP="1"
+        ;;
+    *) ;;
+    esac
+    shift
+done
 
 ##################################
 # Welcome
@@ -633,7 +644,7 @@ fi
 
 # set nginx-ee arguments
 
-if [ $NGINX_RELEASE = "1" ]; then
+if [ -z "$NGINX_RELEASE" ]; then
     NGINX_BUILD_VER='--mainline'
 else
     NGINX_BUILD_VER='--stable'
