@@ -7,7 +7,7 @@
 # Copyright (c) 2018 VirtuBox <contact@virtubox.net>
 # This script is licensed under M.I.T
 # -------------------------------------------------------------------------
-# Version 0.1 - 2019-01-08
+# Version 0.1 - 2019-01-11
 # -------------------------------------------------------------------------
 
 CSI='\033['
@@ -40,6 +40,25 @@ GZIP=/bin/gzip
 clear
 
 ##################################
+# help
+##################################
+
+_help() {
+    echo "WO-NGINX-SETUP - automated WordOps server setup script"
+    echo "Usage: ./wo-nginx-setup.sh [options]"
+    echo "  Options:"
+    echo "       --remote-mysql ..... install mysql-client for remote mysql access"
+    echo "       -i | --interactive ..... interactive installation mode"
+    echo "       --proftpd ..... install proftpd"
+    echo "       --mariadb <mariadb version> ..... set mariadb version manually (default 10.3)"
+    echo "       --all <image path> ..... optimize all images (png + jpg + webp)"
+    echo " Other options :"
+    echo "       -h, --help, help ... displays this help information"
+    echo ""
+    return 0
+}
+
+##################################
 # SSH Keys check
 ##################################
 
@@ -60,18 +79,43 @@ fi
 # Arguments Parsing
 ##################################
 
+[ "${#}" -gt 0 ] && {
+    _help
+    exit 1
+}
+
 while [ "${#}" -gt 0 ]; do
     case "${1}" in
-    --remote-mysql)
-        MYSQL_CLIENT="1"
+        --remote-mysql)
+            MYSQL_CLIENT="y"
         ;;
-    -i | --interactive)
-        INTERACTIVE_SETUP="1"
+        -i | --interactive)
+            INTERACTIVE_SETUP="y"
         ;;
-    *) ;;
+        *) ;;
+        --proftpd)
+            PROFTPD="y"
+        ;;
+        --remotemysql)
+            MARIADB_CLIENT_INSTALL="y"
+        ;;
+        --mariadb)
+            MYSQL="y"
+            MARIADB_VERSION_INSTALL="$2"
+            shift
+        ;;
+        --eecleanup)
+            CLEANUP="y"
+        ;;
+        -h|--help)
+            _help
+            exit 1
+        ;;
     esac
     shift
 done
+
+
 
 ##################################
 # Welcome
@@ -93,6 +137,18 @@ fi
 # Menu
 ##################################
 
+if [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
+    echo ""
+    echo "What is the IP of your remote database ?"
+    read -p "IP : " MARIADB_REMOTE_IP
+    echo ""
+    echo "What is the user of your remote database ?"
+    read -p "User : " MARIADB_REMOTE_USER
+    echo ""
+    echo "What is the password of your remote database ?"
+    read -s -p "password [hidden] : " MARIADB_REMOTE_PASSWORD
+fi
+
 
 if [ "$1" = "-i" ] || [ "$1" = "--interactive" ]; then
     if [ ! -d /etc/mysql ]; then
@@ -101,32 +157,32 @@ if [ "$1" = "-i" ] || [ "$1" = "--interactive" ]; then
         echo "#####################################"
         echo ""
         echo "Do you want to install MariaDB-server ? (y/n)"
-        while [[ $mariadb_server_install != "y" && $mariadb_server_install != "n" ]]; do
-            read -p "Select an option [y/n]: " mariadb_server_install
+        while [[ $MARIADB_SERVER_INSTALL != "y" && $MARIADB_SERVER_INSTALL != "n" ]]; do
+            read -p "Select an option [y/n]: " MARIADB_SERVER_INSTALL
         done
-        if [ "$mariadb_server_install" = "n" ]; then
+        if [ "$MARIADB_SERVER_INSTALL" = "n" ]; then
             echo ""
             echo "Do you want to install MariaDB-client for a remote database ? (y/n)"
-            while [[ $mariadb_client_install != "y" && $mariadb_client_install != "n" ]]; do
-                read -p "Select an option [y/n]: " mariadb_client_install
+            while [[ $MARIADB_CLIENT_INSTALL != "y" && $MARIADB_CLIENT_INSTALL != "n" ]]; do
+                read -p "Select an option [y/n]: " MARIADB_CLIENT_INSTALL
             done
         fi
-        if [ "$mariadb_client_install" = "y" ]; then
+        if [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
             echo ""
             echo "What is the IP of your remote database ?"
-            read -p "IP : " mariadb_remote_ip
+            read -p "IP : " MARIADB_REMOTE_IP
             echo ""
             echo "What is the user of your remote database ?"
-            read -p "User : " mariadb_remote_user
+            read -p "User : " MARIADB_REMOTE_USER
             echo ""
             echo "What is the password of your remote database ?"
-            read -s -p "password [hidden] : " mariadb_remote_password
+            read -s -p "password [hidden] : " MARIADB_REMOTE_PASSWORD
         fi
-        if [[ "$mariadb_server_install" == "y" || "$mariadb_client_install" == "y" ]]; then
+        if [[ "$MARIADB_SERVER_INSTALL" == "y" || "$MARIADB_CLIENT_INSTALL" == "y" ]]; then
             echo ""
             echo "What version of MariaDB Client/Server do you want to install, 10.1, 10.2 or 10.3 ?"
-            while [[ $mariadb_version_install != "10.1" && $mariadb_version_install != "10.2" && $mariadb_version_install != "10.3" ]]; do
-                read -p "Select an option [10.1 / 10.2 / 10.3]: " mariadb_version_install
+            while [[ $MARIADB_VERSION_INSTALL != "10.1" && $MARIADB_VERSION_INSTALL != "10.2" && $MARIADB_VERSION_INSTALL != "10.3" ]]; do
+                read -p "Select an option [10.1 / 10.2 / 10.3]: " MARIADB_VERSION_INSTALL
             done
         fi
         sleep 1
@@ -162,13 +218,6 @@ if [ "$1" = "-i" ] || [ "$1" = "--interactive" ]; then
     echo "#####################################"
     echo "PHP"
     echo "#####################################"
-    if [ ! -f /etc/php/7.1/fpm/php.ini ]; then
-        echo "Do you want php7.1-fpm ? (y/n)"
-        while [[ $phpfpm71_install != "y" && $phpfpm71_install != "n" ]]; do
-            read -p "Select an option [y/n]: " phpfpm71_install
-        done
-        echo ""
-    fi
     if [ ! -f /etc/php/7.2/fpm/php.ini ]; then
         echo "Do you want php7.2-fpm ? (y/n)"
         while [[ $phpfpm72_install != "y" && $phpfpm72_install != "n" ]]; do
@@ -181,8 +230,8 @@ if [ "$1" = "-i" ] || [ "$1" = "--interactive" ]; then
         echo "FTP"
         echo "#####################################"
         echo "Do you want proftpd ? (y/n)"
-        while [[ $proftpd_install != "y" && $proftpd_install != "n" ]]; do
-            read -p "Select an option [y/n]: " proftpd_install
+        while [[ $PROFTPD_INSTALL != "y" && $PROFTPD_INSTALL != "n" ]]; do
+            read -p "Select an option [y/n]: " PROFTPD_INSTALL
         done
     fi
     echo ""
@@ -409,17 +458,19 @@ echo "" >>/etc/sysctl.d/60-ubuntu-nginx-web-server.conf
 # Add MariaDB 10.3 repository
 ##################################
 
-if [[ -z "$mariadb_server_install" && -z "$mariadb_client_install" ]]; then
-    mariadb_version_install=10.3
+if [ -z "$MARIADB_SERVER_INSTALL" ] || [ "$MARIADB_SERVER_INSTALL" = "y" ]; then
+    [ -z "$MARIADB_VERSION_INSTALL" ] && {
+        MARIADB_VERSION_INSTALL="10.3"
+    }
     if [ ! -f /etc/apt/sources.list.d/mariadb.list ]; then
         echo ""
         echo "##########################################"
-        echo " Adding MariaDB $mariadb_version_install repository"
+        echo " Adding MariaDB $MARIADB_VERSION_INSTALL repository"
         echo "##########################################"
 
         wget -O mariadb_repo_setup https://downloads.mariadb.com/MariaDB/mariadb_repo_setup
         chmod +x mariadb_repo_setup
-        ./mariadb_repo_setup --mariadb-server-version=$mariadb_version_install --skip-maxscale -y
+        ./mariadb_repo_setup --mariadb-server-version="$MARIADB_VERSION_INSTALL" --skip-maxscale -y
         rm mariadb_repo_setup
         sudo apt-get update
 
@@ -430,34 +481,34 @@ if [[ -z "$mariadb_server_install" && -z "$mariadb_client_install" ]]; then
     ##################################
 
     # install mariadb server non-interactive way
-        if [ ! -d /etc/mysql ]; then
-            echo ""
-            echo "##########################################"
-            echo " Installing MariaDB server $mariadb_version_install"
-            echo "##########################################"
+    if [ ! -d /etc/mysql ]; then
+        echo ""
+        echo "##########################################"
+        echo " Installing MariaDB server $MARIADB_VERSION_INSTALL"
+        echo "##########################################"
 
-            # generate random password
-            MYSQL_ROOT_PASS=$(date +%s | sha256sum | base64 | head -c 32)
-            export DEBIAN_FRONTEND=noninteractive                             # to avoid prompt during installation
-        sudo debconf-set-selections <<<"mariadb-server-${mariadb_version_install} mysql-server/root_password password ${MYSQL_ROOT_PASS}"
-        sudo debconf-set-selections <<<"mariadb-server-${mariadb_version_install} mysql-server/root_password_again password ${MYSQL_ROOT_PASS}"
+        # generate random password
+        MYSQL_ROOT_PASS="$(date +%s | sha256sum | base64 | head -c 32)"
+        export DEBIAN_FRONTEND=noninteractive                             # to avoid prompt during installation
+        sudo debconf-set-selections <<<"mariadb-server-${MARIADB_VERSION_INSTALL} mysql-server/root_password password ${MYSQL_ROOT_PASS}"
+        sudo debconf-set-selections <<<"mariadb-server-${MARIADB_VERSION_INSTALL} mysql-server/root_password_again password ${MYSQL_ROOT_PASS}"
         # install mariadb server
         DEBIAN_FRONTEND=noninteractive apt-get install -qq mariadb-server # -qq implies -y --force-yes
-            # save credentials in .my.cnf and copy it in /etc/mysql/conf.d for easyengine
-            echo -e '[client]\nuser = root' > $HOME/.my.cnf
-            echo "password = $MYSQL_ROOT_PASS" >>$HOME/.my.cnf
-            cp -f $HOME/.my.cnf /etc/mysql/conf.d/my.cnf
+        # save credentials in .my.cnf and copy it in /etc/mysql/conf.d for easyengine
+        echo -e '[client]\nuser = root' > $HOME/.my.cnf
+        echo "password = $MYSQL_ROOT_PASS" >>$HOME/.my.cnf
+        cp -f $HOME/.my.cnf /etc/mysql/conf.d/my.cnf
 
-            ## mysql_secure_installation non-interactive way
-            mysql -e "GRANT ALL PRIVILEGES on *.* to 'root'@'localhost' IDENTIFIED BY '$MYSQL_ROOT_PASS' WITH GRANT OPTION;"
-            # remove anonymous users
-            mysql -e "DROP USER ''@'localhost'" > /dev/null 2>&1
-            mysql -e "DROP USER ''@'$(hostname)'" > /dev/null 2>&1
-            # remove test database
-            mysql -e "DROP DATABASE test" > /dev/null 2>&1
-            # flush privileges
-            mysql -e "FLUSH PRIVILEGES"
-        fi
+        ## mysql_secure_installation non-interactive way
+        mysql -e "GRANT ALL PRIVILEGES on *.* to 'root'@'localhost' IDENTIFIED BY '$MYSQL_ROOT_PASS' WITH GRANT OPTION;"
+        # remove anonymous users
+        mysql -e "DROP USER ''@'localhost'" > /dev/null 2>&1
+        mysql -e "DROP USER ''@'$(hostname)'" > /dev/null 2>&1
+        # remove test database
+        mysql -e "DROP DATABASE test" > /dev/null 2>&1
+        # flush privileges
+        mysql -e "FLUSH PRIVILEGES"
+    fi
 
     ##################################
     # MariaDB tweaks
@@ -496,7 +547,7 @@ if [[ -z "$mariadb_server_install" && -z "$mariadb_client_install" ]]; then
 
 fi
 
-if [ "$mariadb_client_install" = "y" ]; then
+if [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
 
     echo "installing mariadb-client"
     # install mariadb-client
@@ -504,10 +555,10 @@ if [ "$mariadb_client_install" = "y" ]; then
 
     # set mysql credentials in .my.cnf
     echo "[client]" >>$HOME/.my.cnf
-    echo "host = $mariadb_remote_ip" >>$HOME/.my.cnf
+    echo "host = $MARIADB_REMOTE_IP" >>$HOME/.my.cnf
     echo "port = 3306" >>$HOME/.my.cnf
-    echo "user = $mariadb_remote_user" >>$HOME/.my.cnf
-    echo "password = $mariadb_remote_password" >>$HOME/.my.cnf
+    echo "user = $MARIADB_REMOTE_USER" >>$HOME/.my.cnf
+    echo "password = $MARIADB_REMOTE_PASSWORD" >>$HOME/.my.cnf
 
     # copy .my.cnf in /etc/mysql/conf.d/ for easyengine
     cp $HOME/.my.cnf /etc/mysql/conf.d/my.cnf
@@ -538,10 +589,10 @@ if [ -z "$WO_PREVIOUS_INSTALL" ]; then
 
 
     ##################################
-    # EasyEngine stacks install
+    # WordOps stacks install
     ##################################
 
-    if [ "$mariadb_client_install" = "y" ]; then
+    if [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
         # change MySQL host to % in case of remote MySQL server
         sudo sed -i 's/grant-host = localhost/grant-host = \%/' /etc/wo/wo.conf
     fi
@@ -803,7 +854,7 @@ chmod +x mysqldump.sh
 # Install ProFTPd
 ##################################
 
-if [ "$proftpd_install" = "y" ]; then
+if [ "$PROFTPD_INSTALL" = "y" ]; then
 
     echo "##########################################"
     echo " Installing Proftpd"
@@ -851,11 +902,11 @@ if [ ! -d /etc/netdata ]; then
     ./kickstart.sh all --dont-wait >>/tmp/ubuntu-nginx-web-server.log 2>&1
     rm kickstart.sh
 
-    if [ "$mariadb_server_install" = "y" ]; then
+    if [ "$MARIADB_SERVER_INSTALL" = "y" ]; then
         mysql -e  "create user 'netdata'@'localhost';"
         mysql -e  "grant usage on *.* to 'netdata'@'localhost';"
         mysql -e  "flush privileges;"
-        elif [ "$mariadb_client_install" = "y" ]; then
+        elif [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
         mysql -e  "create user 'netdata'@'%';"
         mysql -e  "grant usage on *.* to 'netdata'@'%';"
         mysql -e  "flush privileges;"
@@ -922,8 +973,9 @@ if [ ! -x /usr/bin/cht.sh ]; then
     echo " Installing cheat.sh"
     echo "##########################################"
 
-    curl https://cht.sh/:cht.sh > /usr/bin/cht.sh || wget -qO  /usr/bin/cht.sh https://cht.sh/:cht.sh
-    chmod +x /usr/bin/cht.sh
+    curl https://cht.sh/:cht.sh > /usr/local/bin/cht.sh || wget -qO  /usr/local/bin/cht.sh https://cht.sh/:cht.sh
+    chmod +x /usr/local/bin/cht.sh
+    echo 'alias cheat="cht.sh"' >> $HOME/.bashrc
 
 fi
 
