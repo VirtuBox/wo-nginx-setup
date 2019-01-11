@@ -12,8 +12,8 @@ before_script:
 script:
   - lsb_release -a
   - sudo echo "Travis Banch = $TRAVIS_BRANCH"
-  - sudo bash wo-nginx-setup.sh $TRAVIS_BRANCH
-  - sudo wo site create wordops.org --wp || sudo tail -n50 /var/log/wo/wo.log
-  - sudo wo site create wordops.io --mysql || sudo tail -n50 /var/log/wo/wo.log
+  - sudo bash wo-nginx-setup.sh $TRAVIS_BRANCH || sudo tail -n 100 /var/log/wo/wordops.log
+  - sudo wo site create wordops.org --wp || sudo tail -n 100 /var/log/wo/wordops.log
+  - sudo wo site create wordops.io --mysql || sudo tail -n 100 /var/log/wo/wordops.log
   - sudo nginx -t
 
