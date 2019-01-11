@@ -51,7 +51,6 @@ _help() {
     echo "       -i | --interactive ..... interactive installation mode"
     echo "       --proftpd ..... install proftpd"
     echo "       --mariadb <mariadb version> ..... set mariadb version manually (default 10.3)"
-    echo "       --all <image path> ..... optimize all images (png + jpg + webp)"
     echo " Other options :"
     echo "       -h, --help, help ... displays this help information"
     echo ""
@@ -78,11 +77,6 @@ fi
 ##################################
 # Arguments Parsing
 ##################################
-
-[ "${#}" -gt 0 ] && {
-    _help
-    exit 1
-}
 
 while [ "${#}" -gt 0 ]; do
     case "${1}" in
