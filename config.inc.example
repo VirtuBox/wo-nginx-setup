@@ -1,0 +1,42 @@
+#!/bin/sh
+
+##################################
+# WordOps Setup Config
+##################################
+
+# n = disabled
+# y = enabled
+
+##################################
+# MySQL Config
+##################################
+
+# install MariaDB server
+MARIADB_SERVER_INSTALL="n"
+
+# MariaDB server release
+MARIADB_VERSION_INSTALL="10.3"
+
+# Remote MySQL server
+
+MARIADB_CLIENT_INSTALL="n"
+
+# Remote MySQL server credentials
+
+MARIADB_REMOTE_IP=""
+MARIADB_REMOTE_USER=""
+MARIADB_REMOTE_PASSWORD=""
+
+##################################
+# Additional software
+##################################
+
+# proftpd FTP server
+PROFTPD_INSTALL="n"
+
+# ClamAV Antivirus
+CLAMAV_INSTALL="n"
+
+
+
+

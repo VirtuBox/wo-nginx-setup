@@ -7,7 +7,7 @@
 # Copyright (c) 2018 VirtuBox <contact@virtubox.net>
 # This script is licensed under M.I.T
 # -------------------------------------------------------------------------
-# Version 0.1 - 2019-01-11
+# Version 0.1 - 2019-01-14
 # -------------------------------------------------------------------------
 
 CSI='\033['
@@ -38,6 +38,13 @@ TAR=/bin/tar
 GZIP=/bin/gzip
 
 clear
+
+[ ! -x /usr/bin/sudo ] && {
+    apt-get update
+    apt-get install sudo
+}
+
+
 
 ##################################
 # help
@@ -78,38 +85,43 @@ fi
 # Arguments Parsing
 ##################################
 
-while [ "${#}" -gt 0 ]; do
-    case "${1}" in
-        --remote-mysql)
-            MYSQL_CLIENT="y"
-        ;;
-        -i | --interactive)
-            INTERACTIVE_SETUP="y"
-        ;;
-        *) ;;
-        --proftpd)
-            PROFTPD="y"
-        ;;
-        --remotemysql)
-            MARIADB_CLIENT_INSTALL="y"
-        ;;
-        --mariadb)
-            MYSQL="y"
-            MARIADB_VERSION_INSTALL="$2"
-            shift
-        ;;
-        --eecleanup)
-            CLEANUP="y"
-        ;;
-        -h|--help)
-            _help
-            exit 1
-        ;;
-    esac
-    shift
-done
-
-
+### Read config
+if [ "${#}" = "0" ] && [ -f "config.inc" ]; then
+    . ./config.inc
+else
+    while [ "${#}" -gt 0 ]; do
+        case "${1}" in
+            -i | --interactive)
+                INTERACTIVE_SETUP="y"
+            ;;
+            --proftpd)
+                PROFTPD_INSTALL="y"
+            ;;
+            --remote-mysql)
+                MARIADB_CLIENT_INSTALL="y"
+            ;;
+            --mariadb)
+                MARIADB_VERSION_INSTALL="$2"
+                shift
+            ;;
+            --secure-backend)
+                SECURE_22222="y"
+            ;;
+            --clamav)
+                CLAMAV_INSTALL="y"
+            ;;
+            --ee-cleanup)
+                EE_CLEANUP="y"
+            ;;
+            -h|--help)
+                _help
+                exit 1
+            ;;
+            *) ;;
+        esac
+        shift
+    done
+fi
 
 ##################################
 # Welcome
@@ -144,7 +156,7 @@ if [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
 fi
 
 
-if [ "$1" = "-i" ] || [ "$1" = "--interactive" ]; then
+if [ "$INTERACTIVE_SETUP" = "y" ]; then
     if [ ! -d /etc/mysql ]; then
         echo "#####################################"
         echo "MariaDB server"
@@ -209,15 +221,6 @@ if [ "$1" = "-i" ] || [ "$1" = "--interactive" ]; then
     fi
     sleep 1
     echo ""
-    echo "#####################################"
-    echo "PHP"
-    echo "#####################################"
-    if [ ! -f /etc/php/7.2/fpm/php.ini ]; then
-        echo "Do you want php7.2-fpm ? (y/n)"
-        while [[ $phpfpm72_install != "y" && $phpfpm72_install != "n" ]]; do
-            read -p "Select an option [y/n]: " phpfpm72_install
-        done
-    fi
     if [ ! -d /etc/proftpd ]; then
         echo ""
         echo "#####################################"
@@ -293,10 +296,6 @@ verify_bins() {
     }
     [ ! -x $MKDIR ] && {
         echo "File $MKDIR does not exists. Make sure correct path is set in $0."
-        exit 0
-    }
-    [ ! -x $MYSQLADMIN ] && {
-        echo "File $MYSQLADMIN does not exists. Make sure correct path is set in $0."
         exit 0
     }
     [ ! -x $GREP ] && {
@@ -502,48 +501,58 @@ if [ -z "$MARIADB_SERVER_INSTALL" ] || [ "$MARIADB_SERVER_INSTALL" = "y" ]; then
         mysql -e "DROP DATABASE test" > /dev/null 2>&1
         # flush privileges
         mysql -e "FLUSH PRIVILEGES"
+
+
+        ##################################
+        # MariaDB tweaks
+        ##################################
+
+        echo "##########################################"
+        echo " Optimizing MariaDB configuration"
+        echo "##########################################"
+
+        cp -f $HOME/ubuntu-nginx-web-server/etc/mysql/my.cnf /etc/mysql/my.cnf
+
+        # AVAILABLE_MEMORY=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+        # PERCENT="40"
+        # MYSQL_MEMORY_USAGE=$((MEM*PERCENT/100))
+
+        # sed -i -e "/\[mysqld\]/,/\[.*\]/s/^innodb_buffer_pool_size/#innodb_buffer_pool_size/" /etc/mysql/my.cnf
+
+        # sed -i -e 's/innodb_buffer_pool_size = [0-9]\+M/innodb_buffer_pool_size = 512M/' /etc/mysql/my.cnf
+
+        # AVAILABLE_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+        # BUFFER_POOL_SIZE=$(( $AVAILABLE_MEMORY / 2000 ))
+        # LOG_FILE_SIZE=$(( $AVAILABLE_MEMORY / 16000 ))
+        # LOG_BUFFER_SIZE=$(( $AVAILABLE_MEMORY / 8000 ))
+
+        # sudo sed -i "s/innodb_buffer_pool_size = 2G/innodb_buffer_pool_size = $BUFFER_POOL_SIZE\\M/" /etc/mysql/my.cnf
+        # sudo sed -i "s/innodb_log_file_size    = 256M/innodb_log_file_size    = $LOG_FILE_SIZE\\M/" /etc/mysql/my.cnf
+        # sudo sed -i "s/innodb_log_buffer_size  = 512M/innodb_log_buffer_size  = $LOG_BUFFER_SIZE\\M/" /etc/mysql/my.cnf
+
+        # stop mysql service to apply new InnoDB log file size
+        sudo service mysql stop
+
+        # mv previous log file
+        sudo mv /var/lib/mysql/ib_logfile0 /var/lib/mysql/ib_logfile0.bak
+        sudo mv /var/lib/mysql/ib_logfile1 /var/lib/mysql/ib_logfile1.bak
+
+        # increase mariadb open_files_limit
+        cp -f $HOME/ubuntu-nginx-web-server/etc/systemd/system/mariadb.service.d/limits.conf /etc/systemd/system/mariadb.service.d/limits.conf
+
+        # reload daemon
+        systemctl daemon-reload
+
+        # restart mysql
+        service mysql start
+
     fi
-
-    ##################################
-    # MariaDB tweaks
-    ##################################
-
-    echo "##########################################"
-    echo " Optimizing MariaDB configuration"
-    echo "##########################################"
-
-    cp -f $HOME/ubuntu-nginx-web-server/etc/mysql/my.cnf /etc/mysql/my.cnf
-
-    # AVAILABLE_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-    # BUFFER_POOL_SIZE=$(( $AVAILABLE_MEMORY / 2000 ))
-    # LOG_FILE_SIZE=$(( $AVAILABLE_MEMORY / 16000 ))
-    # LOG_BUFFER_SIZE=$(( $AVAILABLE_MEMORY / 8000 ))
-
-    # sudo sed -i "s/innodb_buffer_pool_size = 2G/innodb_buffer_pool_size = $BUFFER_POOL_SIZE\\M/" /etc/mysql/my.cnf
-    # sudo sed -i "s/innodb_log_file_size    = 256M/innodb_log_file_size    = $LOG_FILE_SIZE\\M/" /etc/mysql/my.cnf
-    # sudo sed -i "s/innodb_log_buffer_size  = 512M/innodb_log_buffer_size  = $LOG_BUFFER_SIZE\\M/" /etc/mysql/my.cnf
-
-    # stop mysql service to apply new InnoDB log file size
-    sudo service mysql stop
-
-    # mv previous log file
-    sudo mv /var/lib/mysql/ib_logfile0 /var/lib/mysql/ib_logfile0.bak
-    sudo mv /var/lib/mysql/ib_logfile1 /var/lib/mysql/ib_logfile1.bak
-
-    # increase mariadb open_files_limit
-    cp -f $HOME/ubuntu-nginx-web-server/etc/systemd/system/mariadb.service.d/limits.conf /etc/systemd/system/mariadb.service.d/limits.conf
-
-    # reload daemon
-    systemctl daemon-reload
-
-    # restart mysql
-    service mysql start
-
 fi
 
 if [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
 
     echo "installing mariadb-client"
+
     # install mariadb-client
     apt-get install -y mariadb-client
 
@@ -580,7 +589,6 @@ if [ -z "$WO_PREVIOUS_INSTALL" ]; then
         rm wo
 
     fi
-
 
     ##################################
     # WordOps stacks install
@@ -669,19 +677,6 @@ sudo service php7.2-fpm restart
 # commit changes
 git -C /etc/php/ add /etc/php/ && git -C /etc/php/ commit -m "add php7.2 configuration"
 
-
-##################################
-# Update php7.0-fpm config
-##################################
-echo "##########################################"
-echo " Configuring php7.0-fpm"
-echo "##########################################"
-
-if [ -f /etc/php/7.0/fpm/php.ini ]; then
-
-    cp -rf $HOME/ubuntu-nginx-web-server/etc/php/7.0/* /etc/php/7.0/
-
-fi
 
 ##################################
 # Compile latest nginx release from source
@@ -801,27 +796,30 @@ cp -rf $HOME/ubuntu-nginx-web-server/etc/fail2ban/jail.d/* /etc/fail2ban/jail.d/
 
 fail2ban-client reload
 
-##################################
-# Add fail2ban configurations
-##################################
-echo "##########################################"
-echo " Installing ClamAV"
-echo "##########################################"
+if [ $CLAMAV_INSTALL = "y" ]; then
 
-if [ ! -x /usr/bin/clamscan ]; then
-    apt-get install clamav -y
+    ##################################
+    # Install ClamAV
+    ##################################
+    echo "##########################################"
+    echo " Installing ClamAV"
+    echo "##########################################"
+
+    if [ ! -x /usr/bin/clamscan ]; then
+        apt-get install clamav -y
+    fi
+
+    ##################################
+    # Update ClamAV database fail2ban configurations
+    ##################################
+    echo "##########################################"
+    echo " Updating ClamAV signature database"
+    echo "##########################################"
+
+    /etc/init.d/clamav-freshclam stop
+    freshclam
+    /etc/init.d/clamav-freshclam start
 fi
-
-##################################
-# Add fail2ban configurations
-##################################
-echo "##########################################"
-echo " Updating ClamAV signature database"
-echo "##########################################"
-
-/etc/init.d/clamav-freshclam stop
-freshclam
-/etc/init.d/clamav-freshclam start
 
 ##################################
 # Install cheat & nanorc
@@ -974,43 +972,64 @@ if [ ! -x /usr/bin/cht.sh ]; then
 fi
 
 ##################################
-# Secure EasyEngine Dashboard with Acme.sh
+# Secure WordOps Dashboard with Acme.sh
 ##################################
 
-MY_HOSTNAME=$(/bin/hostname -f)
-MY_IP=$(ip -4 address show ${NET_INTERFACES_WAN} | grep 'inet' | sed 's/.*inet \([0-9\.]\+\).*/\1/')
-MY_HOSTNAME_IP=$(/usr/bin/dig +short @8.8.8.8 "$MY_HOSTNAME")
+if [ "$SECURE_22222" = "y" ]; then
 
-if [ "$MY_IP" = "$MY_HOSTNAME_IP" ]; then
+    MY_HOSTNAME=$(/bin/hostname -f)
+    MY_IP=$(ip -4 address show ${NET_INTERFACES_WAN} | grep 'inet' | sed 's/.*inet \([0-9\.]\+\).*/\1/')
+    MY_HOSTNAME_IP=$(/usr/bin/dig +short @8.8.8.8 "$MY_HOSTNAME")
+
+    if [ "$MY_IP" = "$MY_HOSTNAME_IP" ]; then
+        echo "##########################################"
+        echo " Securing EasyEngine Backend"
+        echo "##########################################"
+        apt-get install -y socat
+
+
+        if [ ! -d $HOME/.acme.sh/${MY_HOSTNAME}_ecc ]; then
+            $HOME/.acme.sh/acme.sh --issue -d $MY_HOSTNAME -k ec-384 --standalone --pre-hook "service nginx stop" --post-hook "service nginx start"
+        fi
+
+        if [ -d /etc/letsencrypt/live/$MY_HOSTNAME ]; then
+            rm -rf /etc/letsencrypt/live/$MY_HOSTNAME/*
+        else
+            mkdir -p /etc/letsencrypt/live/$MY_HOSTNAME
+        fi
+
+        # install the cert and reload nginx
+        if [ -f $HOME/.acme.sh/${MY_HOSTNAME}_ecc/fullchain.cer ]; then
+            $HOME/.acme.sh/acme.sh --install-cert -d ${MY_HOSTNAME} --ecc \
+            --cert-file /etc/letsencrypt/live/${MY_HOSTNAME}/cert.pem \
+            --key-file /etc/letsencrypt/live/${MY_HOSTNAME}/key.pem \
+            --fullchain-file /etc/letsencrypt/live/${MY_HOSTNAME}/fullchain.pem \
+            --reloadcmd "service nginx restart"
+        fi
+
+        if [ -f /etc/letsencrypt/live/${MY_HOSTNAME}/fullchain.pem ] && [ -f /etc/letsencrypt/live/${MY_HOSTNAME}/key.pem ]; then
+            sed -i "s/ssl_certificate \\/var\\/www\\/22222\\/cert\\/22222.crt;/ssl_certificate \\/etc\\/letsencrypt\\/live\\/${MY_HOSTNAME}\\/fullchain.pem;/" /etc/nginx/sites-available/22222
+            sed -i "s/ssl_certificate_key \\/var\\/www\\/22222\\/cert\\/22222.key;/ssl_certificate_key    \\/etc\\/letsencrypt\\/live\\/${MY_HOSTNAME}\\/key.pem;/" /etc/nginx/sites-available/22222
+        fi
+        service nginx reload
+
+    fi
+fi
+
+##################################
+# Cleanup previous EasyEngine install
+##################################
+
+if [ "$EE_CLEANUP" = "y" ]; then
     echo "##########################################"
-    echo " Securing EasyEngine Backend"
+    echo " Cleaning up EasyEngine"
     echo "##########################################"
-    apt-get install -y socat
+    tar -I pigz -cvf $HOME/ee-backup.tar.gz /etc/ee /var/lib/ee /usr/lib/ee/templates
 
+    rm -rf /etc/ee /var/lib/ee /usr/lib/ee
+    rm -rf /usr/local/lib/python3.6/dist-packages/ee-3.*
 
-    if [ ! -d $HOME/.acme.sh/${MY_HOSTNAME}_ecc ]; then
-        $HOME/.acme.sh/acme.sh --issue -d $MY_HOSTNAME -k ec-384 --standalone --pre-hook "service nginx stop" --post-hook "service nginx start"
-    fi
-
-    if [ -d /etc/letsencrypt/live/$MY_HOSTNAME ]; then
-        rm -rf /etc/letsencrypt/live/$MY_HOSTNAME/*
-    else
-        mkdir -p /etc/letsencrypt/live/$MY_HOSTNAME
-    fi
-
-    # install the cert and reload nginx
-    if [ -f $HOME/.acme.sh/${MY_HOSTNAME}_ecc/fullchain.cer ]; then
-        $HOME/.acme.sh/acme.sh --install-cert -d ${MY_HOSTNAME} --ecc \
-        --cert-file /etc/letsencrypt/live/${MY_HOSTNAME}/cert.pem \
-        --key-file /etc/letsencrypt/live/${MY_HOSTNAME}/key.pem \
-        --fullchain-file /etc/letsencrypt/live/${MY_HOSTNAME}/fullchain.pem \
-        --reloadcmd "service nginx restart"
-    fi
-
-    if [ -f /etc/letsencrypt/live/${MY_HOSTNAME}/fullchain.pem ] && [ -f /etc/letsencrypt/live/${MY_HOSTNAME}/key.pem ]; then
-        sed -i "s/ssl_certificate \\/var\\/www\\/22222\\/cert\\/22222.crt;/ssl_certificate \\/etc\\/letsencrypt\\/live\\/${MY_HOSTNAME}\\/fullchain.pem;/" /etc/nginx/sites-available/22222
-        sed -i "s/ssl_certificate_key \\/var\\/www\\/22222\\/cert\\/22222.key;/ssl_certificate_key    \\/etc\\/letsencrypt\\/live\\/${MY_HOSTNAME}\\/key.pem;/" /etc/nginx/sites-available/22222
-    fi
-    service nginx reload
+    apt-get -y autoremove php5.6-fpm php5.6-common --purge
+    apt-get -y autoremove php7.0-fpm php7.0-common --purge
 
 fi
