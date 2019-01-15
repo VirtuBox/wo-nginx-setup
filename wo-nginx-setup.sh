@@ -31,17 +31,11 @@ EXTPLORER_VER="2.1.10"
     exit 1
 }
 
-### Set Bins Path ###
-RM=/bin/rm
-CP=/bin/cp
-TAR=/bin/tar
-GZIP=/bin/gzip
-
-clear
+### Make Sure Sudo available ###
 
 [ ! -x /usr/bin/sudo ] && {
     apt-get update
-    apt-get install sudo
+    apt-get install sudo -y
 }
 
 
@@ -86,9 +80,13 @@ fi
 ##################################
 
 ### Read config
-if [ "${#}" = "0" ] && [ -f "config.inc" ]; then
+if [ -f ./config.inc ]; then
+{
+    # shellcheck disable=SC1091
     . ./config.inc
+}
 else
+{
     while [ "${#}" -gt 0 ]; do
         case "${1}" in
             -i | --interactive)
@@ -121,6 +119,7 @@ else
         esac
         shift
     done
+}
 fi
 
 ##################################
@@ -272,43 +271,7 @@ sudo systemctl enable ntp
 # increase history size
 export HISTSIZE=10000
 
-echo "##########################################"
-echo " Checking required executable path"
-echo "##########################################"
 
-### Make Sure Bins Exists ###
-verify_bins() {
-    [ ! -x $GZIP ] && {
-        echo "Executable $GZIP does not exists. Make sure correct path is set in $0."
-        exit 0
-    }
-    [ ! -x $TAR ] && {
-        echo "Executable $TAR does not exists. Make sure correct path is set in $0."
-        exit 0
-    }
-    [ ! -x $RM ] && {
-        echo "File $RM does not exists. Make sure correct path is set in $0."
-        exit 0
-    }
-    [ ! -x $CP ] && {
-        echo "File $CP does not exists. Make sure correct path is set in $0."
-        exit 0
-    }
-    [ ! -x $MKDIR ] && {
-        echo "File $MKDIR does not exists. Make sure correct path is set in $0."
-        exit 0
-    }
-    [ ! -x $GREP ] && {
-        echo "File $GREP does not exists. Make sure correct path is set in $0."
-        exit 0
-    }
-    [ ! -x $FIND ] && {
-        echo "File $GREP does not exists. Make sure correct path is set in $0."
-        exit 0
-    }
-}
-
-verify_bins
 
 ##################################
 # clone repository
