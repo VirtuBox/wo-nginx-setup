@@ -1,5 +1,7 @@
 # Bash script to automate optimized WordOps setup
 
+[![Build Status](https://travis-ci.com/VirtuBox/wo-nginx-setup.svg?branch=master)](https://travis-ci.com/VirtuBox/wo-nginx-setup) ![wo-nginx-setup](https://img.shields.io/github/license/VirtuBox/wo-nginx-setup.svg?style=flat) ![](https://img.shields.io/github/last-commit/virtubox/wo-nginx-setup.svg?style=flat)
+
 * * *
 
 ## Server Stack
@@ -7,7 +9,7 @@
 - Nginx 1.15.x/1.14 with [nginx-ee](https://virtubox.github.io/nginx-ee/)
 - PHP-FPM 7.0/7.1/7.2/7.3
 - MariaDB 10.1/10.2/10.3
-- REDIS 4.0
+- REDIS 5.0
 - Fail2ban
 - UFW Firewall
 - ClamAV Antivirus
@@ -52,10 +54,12 @@ wget -O wo-nginx-setup.sh https://raw.githubusercontent.com/VirtuBox/wo-nginx-se
 chmod +x wo-nginx-setup.sh
 ```
 
-Launch installation
+Launch interactive setup
 
 ```bash
-./wo-nginx-setup.sh <options>
+./wo-nginx-setup.sh -i
 ```
+
+**Non-interactive setup examples will be available soon**
 
 Published & maintained by [VirtuBox](https://virtubox.net)
