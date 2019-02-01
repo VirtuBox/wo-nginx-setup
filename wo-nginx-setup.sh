@@ -247,7 +247,7 @@ echo " Updating Packages"
 echo "##########################################"
 
 sudo apt-get update
-sudo apt-get upgrade -y
+sudo apt-get full-upgrade -y
 sudo apt-get autoremove -y --purge
 sudo apt-get autoclean -y
 
@@ -263,7 +263,7 @@ echo "##########################################"
 echo " Installing useful packages"
 echo "##########################################"
 
-sudo apt-get install haveged curl git unzip zip fail2ban htop nload nmon tar gzip ntp gnupg gnupg2 wget pigz tree ccze mycli -y
+sudo apt-get install haveged curl git unzip zip fail2ban htop nload nmon tar gzip ntp gnupg gnupg2 wget pigz tree ccze mycli screen tmux -y
 
 # ntp time
 sudo systemctl enable ntp
