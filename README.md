@@ -45,10 +45,17 @@
 
 ### Usage
 
+Download wo-nginx-setup
+
 ```bash
-wget -O ee-nginx-setup.sh https://raw.githubusercontent.com/VirtuBox/ee-nginx-setup/master/ee-nginx-setup.sh
-chmod +x ee-nginx-setup.sh
-./ee-nginx-setup.sh
+wget -O wo-nginx-setup.sh https://raw.githubusercontent.com/VirtuBox/wo-nginx-setup/master/wo-nginx-setup.sh
+chmod +x wo-nginx-setup.sh
+```
+
+Launch installation
+
+```bash
+./wo-nginx-setup.sh <options>
 ```
 
 Published & maintained by [VirtuBox](https://virtubox.net)
