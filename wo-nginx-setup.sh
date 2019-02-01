@@ -7,7 +7,7 @@
 # Copyright (c) 2018 VirtuBox <contact@virtubox.net>
 # This script is licensed under M.I.T
 # -------------------------------------------------------------------------
-# Version 0.1 - 2019-01-14
+# Version 1.0 - 2019-02-01
 # -------------------------------------------------------------------------
 
 CSI='\033['
@@ -531,7 +531,7 @@ if [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
 fi
 
 ##################################
-# EasyEngine automated install
+# WordOps automated install
 ##################################
 
 if [ -z "$WO_PREVIOUS_INSTALL" ]; then
@@ -542,7 +542,7 @@ if [ -z "$WO_PREVIOUS_INSTALL" ]; then
     fi
     if [ ! -x /usr/local/bin/wo ]; then
         echo "##########################################"
-        echo " Installing EasyEngine"
+        echo " Installing WordOps"
         echo "##########################################"
 
         wget -O wo https://raw.githubusercontent.com/WordOps/WordOps/master/install
@@ -941,7 +941,7 @@ fi
 if [ "$SECURE_22222" = "y" ]; then
 
     MY_HOSTNAME=$(/bin/hostname -f)
-    MY_IP=$(ip -4 address show ${NET_INTERFACES_WAN} | grep 'inet' | sed 's/.*inet \([0-9\.]\+\).*/\1/')
+    MY_IP=$(curl -s v4.vtbox.net)
     MY_HOSTNAME_IP=$(/usr/bin/dig +short @8.8.8.8 "$MY_HOSTNAME")
 
     if [ "$MY_IP" = "$MY_HOSTNAME_IP" ]; then
@@ -985,14 +985,19 @@ fi
 
 if [ "$EE_CLEANUP" = "y" ]; then
     echo "##########################################"
-    echo " Cleaning up EasyEngine"
+    echo " Cleaning up previous EasyEngine installation"
     echo "##########################################"
+
     tar -I pigz -cvf $HOME/ee-backup.tar.gz /etc/ee /var/lib/ee /usr/lib/ee/templates
+    echo "Backup of the previous EasyEngine configurations is available here : $HOME/ee-backup.tar.gz"
 
     rm -rf /etc/ee /var/lib/ee /usr/lib/ee
     rm -rf /usr/local/lib/python3.6/dist-packages/ee-3.*
 
     apt-get -y autoremove php5.6-fpm php5.6-common --purge
     apt-get -y autoremove php7.0-fpm php7.0-common --purge
-
 fi
+
+echo ""
+echo -e "       ${CGREEN}Optimized Wordops was setup successfully !${CEND}"
+echo ""
