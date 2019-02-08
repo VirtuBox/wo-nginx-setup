@@ -38,6 +38,11 @@ EXTPLORER_VER="2.1.10"
     apt-get install sudo -y
 }
 
+[ ! -x /usr/bin/curl ] && {
+    apt-get update
+    apt-get install curl -y
+}
+
 
 
 ##################################
@@ -81,45 +86,45 @@ fi
 
 ### Read config
 if [ -f ./config.inc ]; then
-{
-    # shellcheck disable=SC1091
-    . ./config.inc
-}
+    {
+        # shellcheck disable=SC1091
+        . ./config.inc
+    }
 else
-{
-    while [ "${#}" -gt 0 ]; do
-        case "${1}" in
-            -i | --interactive)
-                INTERACTIVE_SETUP="y"
-            ;;
-            --proftpd)
-                PROFTPD_INSTALL="y"
-            ;;
-            --remote-mysql)
-                MARIADB_CLIENT_INSTALL="y"
-            ;;
-            --mariadb)
-                MARIADB_VERSION_INSTALL="$2"
-                shift
-            ;;
-            --secure-backend)
-                SECURE_22222="y"
-            ;;
-            --clamav)
-                CLAMAV_INSTALL="y"
-            ;;
-            --ee-cleanup)
-                EE_CLEANUP="y"
-            ;;
-            -h|--help)
-                _help
-                exit 1
-            ;;
-            *) ;;
-        esac
-        shift
-    done
-}
+    {
+        while [ "$#" -gt 0 ]; do
+            case "$1" in
+                -i | --interactive)
+                    INTERACTIVE_SETUP="y"
+                ;;
+                --proftpd)
+                    PROFTPD_INSTALL="y"
+                ;;
+                --remote-mysql)
+                    MARIADB_CLIENT_INSTALL="y"
+                ;;
+                --mariadb)
+                    MARIADB_VERSION_INSTALL="$2"
+                    shift
+                ;;
+                --secure-backend)
+                    SECURE_22222="y"
+                ;;
+                --clamav)
+                    CLAMAV_INSTALL="y"
+                ;;
+                --ee-cleanup)
+                    EE_CLEANUP="y"
+                ;;
+                -h|--help)
+                    _help
+                    exit 1
+                ;;
+                *) ;;
+            esac
+            shift
+        done
+    }
 fi
 
 ##################################
@@ -142,17 +147,6 @@ fi
 # Menu
 ##################################
 
-if [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
-    echo ""
-    echo "What is the IP of your remote database ?"
-    read -p "IP : " MARIADB_REMOTE_IP
-    echo ""
-    echo "What is the user of your remote database ?"
-    read -p "User : " MARIADB_REMOTE_USER
-    echo ""
-    echo "What is the password of your remote database ?"
-    read -s -p "password [hidden] : " MARIADB_REMOTE_PASSWORD
-fi
 
 
 if [ "$INTERACTIVE_SETUP" = "y" ]; then
@@ -192,6 +186,17 @@ if [ "$INTERACTIVE_SETUP" = "y" ]; then
         fi
         sleep 1
     fi
+    if [ ! -d /etc/php/7.3/fpm/pool.d ]; then
+        echo ""
+        echo "#####################################"
+        echo "PHP"
+        echo "#####################################"
+        echo ""
+        echo "Do you want to install PHP 7.3 ? (y/n)"
+        while [[ $PHP73_INSTALL != "y" && $PHP73_INSTALL != "n" ]]; do
+            read -p "Select an option [y/n]: " PHP73_INSTALL
+        done
+    fi
     if [ ! -d /etc/nginx ]; then
         echo ""
         echo "#####################################"
@@ -220,14 +225,53 @@ if [ "$INTERACTIVE_SETUP" = "y" ]; then
     fi
     sleep 1
     echo ""
+    if [ ! -d /etc/ufw ]; then
+        echo ""
+        echo "#####################################"
+        echo "FTP"
+        echo "#####################################"
+        echo "Do you want to install UFW Firewall ? (y/n)"
+        while [[ $UFW_INSTALL != "y" && $UFW_INSTALL != "n" ]]; do
+            read -p "Select an option [y/n]: " UFW_INSTALL
+        done
+    fi
     if [ ! -d /etc/proftpd ]; then
         echo ""
         echo "#####################################"
         echo "FTP"
         echo "#####################################"
-        echo "Do you want proftpd ? (y/n)"
+        echo "Do you want to install proftpd ? (y/n)"
         while [[ $PROFTPD_INSTALL != "y" && $PROFTPD_INSTALL != "n" ]]; do
             read -p "Select an option [y/n]: " PROFTPD_INSTALL
+        done
+    fi
+    if [ ! -x /usr/bin/clamscan ]; then
+        echo ""
+        echo "#####################################"
+        echo "FTP"
+        echo "#####################################"
+        echo "Do you want to install ClamAV ? (y/n)"
+        while [[ $CLAMAV_INSTALL != "y" && $CLAMAV_INSTALL != "n" ]]; do
+            read -p "Select an option [y/n]: " CLAMAV_INSTALL
+        done
+    fi
+    echo ""
+    echo "#####################################"
+    echo "FTP"
+    echo "#####################################"
+    echo "Do you want to install WordOps Dashboard ? (y/n)"
+    while [[ $WO_DASHBOARD_INSTALL != "y" && $WO_DASHBOARD_INSTALL != "n" ]]; do
+        read -p "Select an option [y/n]: " WO_DASHBOARD_INSTALL
+    done
+
+    if [ ! -d /etc/netdata ]; then
+        echo ""
+        echo "#####################################"
+        echo "FTP"
+        echo "#####################################"
+        echo "Do you want to install WordOps Dashboard ? (y/n)"
+        while [[ $NETDATA_INSTALL != "y" && $NETDATA_INSTALL != "n" ]]; do
+            read -p "Select an option [y/n]: " NETDATA_INSTALL
         done
     fi
     echo ""
@@ -236,6 +280,20 @@ if [ "$INTERACTIVE_SETUP" = "y" ]; then
     echo "use CTRL + C if you want to cancel installation"
     echo "#####################################"
     sleep 5
+else
+
+    if [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
+        echo ""
+        echo "What is the IP of your remote database ?"
+        read -p "IP : " MARIADB_REMOTE_IP
+        echo ""
+        echo "What is the user of your remote database ?"
+        read -p "User : " MARIADB_REMOTE_USER
+        echo ""
+        echo "What is the password of your remote database ?"
+        read -s -p "password [hidden] : " MARIADB_REMOTE_PASSWORD
+    fi
+
 fi
 
 ##################################
@@ -247,7 +305,7 @@ echo " Updating Packages"
 echo "##########################################"
 
 sudo apt-get update
-sudo apt-get full-upgrade -y
+sudo apt-get dist-upgrade -y
 sudo apt-get autoremove -y --purge
 sudo apt-get autoclean -y
 
@@ -310,59 +368,63 @@ echo "##########################################"
 echo " Configuring ufw"
 echo "##########################################"
 
-if [ ! -d /etc/ufw ]; then
-    sudo apt-get install ufw -y
+if [ -z "$UFW_INSTALL" ] || [ "$UFW_INSTALL" = "y" ]; then
+
+    if [ ! -d /etc/ufw ]; then
+        sudo apt-get install ufw -y
+    fi
+
+    # define firewall rules
+
+    sudo ufw logging low
+    sudo ufw default allow outgoing
+    sudo ufw default deny incoming
+
+    # default ssh port
+    sudo ufw allow 22
+
+    # custom ssh port
+    if [ "$CURRENT_SSH_PORT" != "22" ];then
+        sudo ufw allow "$CURRENT_SSH_PORT"
+    fi
+
+    # dns
+    sudo ufw allow 53
+
+    # nginx
+    sudo ufw allow http
+    sudo ufw allow https
+
+    # ntp
+    sudo ufw allow 123
+
+    # dhcp client
+    sudo ufw allow 68
+
+    # dhcp ipv6 client
+    sudo ufw allow 546
+
+    # rsync
+    sudo ufw allow 873
+
+    # easyengine backend
+    sudo ufw allow 22222
+
+    # optional for monitoring
+
+    # SNMP UDP port
+    #sudo ufw allow 161
+
+    # Netdata web interface
+    #sudo ufw allow 1999
+
+    # Librenms linux agent
+    #sudo ufw allow 6556
+
+    # Zabbix-agent
+    #sudo ufw allow 10050
+
 fi
-
-# define firewall rules
-
-sudo ufw logging low
-sudo ufw default allow outgoing
-sudo ufw default deny incoming
-
-# default ssh port
-sudo ufw allow 22
-
-# custom ssh port
-if [ "$CURRENT_SSH_PORT" != "22" ];then
-    sudo ufw allow "$CURRENT_SSH_PORT"
-fi
-
-# dns
-sudo ufw allow 53
-
-# nginx
-sudo ufw allow http
-sudo ufw allow https
-
-# ntp
-sudo ufw allow 123
-
-# dhcp client
-sudo ufw allow 68
-
-# dhcp ipv6 client
-sudo ufw allow 546
-
-# rsync
-sudo ufw allow 873
-
-# easyengine backend
-sudo ufw allow 22222
-
-# optional for monitoring
-
-# SNMP UDP port
-#sudo ufw allow 161
-
-# Netdata web interface
-#sudo ufw allow 1999
-
-# Librenms linux agent
-#sudo ufw allow 6556
-
-# Zabbix-agent
-#sudo ufw allow 10050
 
 ##################################
 # Sysctl tweaks +  open_files limits
@@ -640,6 +702,24 @@ sudo service php7.2-fpm restart
 # commit changes
 git -C /etc/php/ add /etc/php/ && git -C /etc/php/ commit -m "add php7.2 configuration"
 
+if [ "$PHP73_INSTALL" = "y" ] || [ -z "$PHP73_INSTALL" ];  then
+
+    ##################################
+    # Install php7.3-fpm
+    ##################################
+
+    echo "##########################################"
+    echo " Installing php7.2-fpm"
+    echo "##########################################"
+
+    sudo apt-get install php7.3-fpm php7.3-xml php7.3-bz2 php7.3-zip php7.3-mysql php7.3-intl php7.3-gd php7.3-curl php7.3-soap php7.3-mbstring php7.3-bcmath -y
+
+    sudo cp -rf $HOME/ubuntu-nginx-web-server/etc/php/7.3/* /etc/php/7.3/
+    sudo service php7.3-fpm restart
+
+    git -C /etc/php/ add /etc/php/ && git -C /etc/php/ commit -m "add php7.3 configuration"
+
+fi
 
 ##################################
 # Compile latest nginx release from source
@@ -714,6 +794,7 @@ sed -i 's/rotate 52/rotate 4/' /etc/logrotate.d/nginx
 wget -O $HOME/nginx-cloudflare-real-ip.sh https://raw.githubusercontent.com/VirtuBox/nginx-cloudflare-real-ip/master/nginx-cloudflare-real-ip.sh
 chmod +x $HOME/nginx-cloudflare-real-ip.sh
 $HOME/nginx-cloudflare-real-ip.sh
+rm $HOME/nginx-cloudflare-real-ip.sh
 
 # commit changes
 git -C /etc/nginx/ add /etc/nginx/ && git -C /etc/nginx/ commit -m "update nginx.conf and setup cloudflare visitor real IP restore"
@@ -842,34 +923,38 @@ fi
 # Install Netdata
 ##################################
 
-if [ ! -d /etc/netdata ]; then
-    echo "##########################################"
-    echo " Installing Netdata"
-    echo "##########################################"
+if [ "$NETDATA_INSTALL" = "y" ] || [ -z "$NETDATA_INSTALL" ]; then
 
-    ## optimize netdata resources usage
-    echo 1 >/sys/kernel/mm/ksm/run
-    echo 1000 >/sys/kernel/mm/ksm/sleep_millisecs
+    if [ ! -d /etc/netdata ]; then
+        echo "##########################################"
+        echo " Installing Netdata"
+        echo "##########################################"
 
-    ## install nedata
-    wget -O kickstart.sh https://my-netdata.io/kickstart.sh
-    chmod +x kickstart.sh
-    ./kickstart.sh all --dont-wait >>/tmp/ubuntu-nginx-web-server.log 2>&1
-    rm kickstart.sh
+        ## optimize netdata resources usage
+        echo 1 >/sys/kernel/mm/ksm/run
+        echo 1000 >/sys/kernel/mm/ksm/sleep_millisecs
 
-    if [ "$MARIADB_SERVER_INSTALL" = "y" ]; then
-        mysql -e  "create user 'netdata'@'localhost';"
-        mysql -e  "grant usage on *.* to 'netdata'@'localhost';"
-        mysql -e  "flush privileges;"
-        elif [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
-        mysql -e  "create user 'netdata'@'%';"
-        mysql -e  "grant usage on *.* to 'netdata'@'%';"
-        mysql -e  "flush privileges;"
+        ## install nedata
+        wget -O kickstart.sh https://my-netdata.io/kickstart.sh
+        chmod +x kickstart.sh
+        ./kickstart.sh all --dont-wait >>/tmp/ubuntu-nginx-web-server.log 2>&1
+        rm kickstart.sh
+
+        if [ "$MARIADB_SERVER_INSTALL" = "y" ]; then
+            mysql -e  "create user 'netdata'@'localhost';"
+            mysql -e  "grant usage on *.* to 'netdata'@'localhost';"
+            mysql -e  "flush privileges;"
+            elif [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
+            mysql -e  "create user 'netdata'@'%';"
+            mysql -e  "grant usage on *.* to 'netdata'@'%';"
+            mysql -e  "flush privileges;"
+        fi
+
+        ## disable email notifigrep -cions
+        sudo sed -i 's/SEND_EMAIL="YES"/SEND_EMAIL="NO"/' /usr/lib/netdata/conf.d/health_alarm_notify.conf
+        sudo service netdata restart
+
     fi
-
-    ## disable email notifigrep -cions
-    sudo sed -i 's/SEND_EMAIL="YES"/SEND_EMAIL="NO"/' /usr/lib/netdata/conf.d/health_alarm_notify.conf
-    sudo service netdata restart
 
 fi
 
@@ -881,26 +966,32 @@ echo "##########################################"
 echo " Installing EasyEngine Dashboard"
 echo "##########################################"
 
-if [ ! -d /var/www/22222/htdocs/files ]; then
+if [ "$WO_DASHBOARD_INSTALL" = "y" ] || [ -z "$WO_DASHBOARD_INSTALL" ]; then
 
-    mkdir -p /var/www/22222/htdocs/files
-    wget -qO /var/www/22222/htdocs/files/ex.zip http://extplorer.net/attachments/download/74/eXtplorer_$EXTPLORER_VER.zip
-    cd /var/www/22222/htdocs/files || exit 1
-    unzip ex.zip
-    rm ex.zip
+    if [ ! -d /var/www/22222/htdocs/files ]; then
+
+        mkdir -p /var/www/22222/htdocs/files
+        wget -qO /var/www/22222/htdocs/files/ex.zip http://extplorer.net/attachments/download/74/eXtplorer_$EXTPLORER_VER.zip
+        cd /var/www/22222/htdocs/files || exit 1
+        unzip ex.zip
+        rm ex.zip
+    fi
+
+    cd /var/www/22222 || exit
+
+    ## download latest version of EasyEngine-dashboard
+    cd /tmp || exit
+    git clone https://github.com/VirtuBox/easyengine-dashboard.git
+    cp -rf /tmp/easyengine-dashboard/* /var/www/22222/htdocs/
+    chown -R www-data:www-data /var/www/22222/htdocs
+
 fi
-
-cd /var/www/22222 || exit
-
-## download latest version of EasyEngine-dashboard
-cd /tmp || exit
-git clone https://github.com/VirtuBox/easyengine-dashboard.git
-cp -rf /tmp/easyengine-dashboard/* /var/www/22222/htdocs/
-chown -R www-data:www-data /var/www/22222/htdocs
 
 ##################################
 # Install Acme.sh
 ##################################
+
+
 
 echo "##########################################"
 echo " Installing Acme.sh"
@@ -938,7 +1029,7 @@ fi
 # Secure WordOps Dashboard with Acme.sh
 ##################################
 
-if [ "$SECURE_22222" = "y" ]; then
+if [ "$SECURE_22222" = "y" ] || [ -z "$SECURE_22222" ]; then
 
     MY_HOSTNAME=$(/bin/hostname -f)
     MY_IP=$(curl -s v4.vtbox.net)
@@ -952,7 +1043,7 @@ if [ "$SECURE_22222" = "y" ]; then
 
 
         if [ ! -d $HOME/.acme.sh/${MY_HOSTNAME}_ecc ]; then
-            $HOME/.acme.sh/acme.sh --issue -d $MY_HOSTNAME -k ec-384 --standalone --pre-hook "service nginx stop" --post-hook "service nginx start"
+            $HOME/.acme.sh/acme.sh --issue -d "$MY_HOSTNAME" -k ec-384 --standalone --pre-hook "service nginx stop" --post-hook "service nginx start"
         fi
 
         if [ -d /etc/letsencrypt/live/$MY_HOSTNAME ]; then
@@ -996,6 +1087,7 @@ if [ "$EE_CLEANUP" = "y" ]; then
 
     apt-get -y autoremove php5.6-fpm php5.6-common --purge
     apt-get -y autoremove php7.0-fpm php7.0-common --purge
+    apt-get -y autoremove php7.1-fpm php7.1-common --purge
 fi
 
 echo ""
