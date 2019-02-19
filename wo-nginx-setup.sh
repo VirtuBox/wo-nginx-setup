@@ -109,6 +109,9 @@ else
                 --ee-cleanup)
                     EE_CLEANUP="y"
                 ;;
+                --travis)
+                TRAVIS_BUILD="y"
+                ;;
                 -h|--help)
                     _help
                     exit 1
@@ -249,10 +252,14 @@ echo "##########################################"
 echo " Updating Packages"
 echo "##########################################"
 
+[ -z "$TRAVIS_BUILD" ] && {
+
 sudo apt-get update
 sudo apt-get dist-upgrade -y
 sudo apt-get autoremove -y --purge
 sudo apt-get autoclean -y
+
+}
 
 echo "##########################################"
 echo " Updating Packages   [OK]"
@@ -376,7 +383,6 @@ echo " Applying Linux Kernel tweaks"
 echo "##########################################"
 
 sudo cp -f $HOME/ubuntu-nginx-web-server/etc/sysctl.d/60-ubuntu-nginx-web-server.conf /etc/sysctl.d/60-ubuntu-nginx-web-server.conf
-sudo sysctl -e -p /etc/sysctl.d/60-ubuntu-nginx-web-server.conf
 sudo cp -f $HOME/ubuntu-nginx-web-server/etc/security/limits.conf /etc/security/limits.conf
 
 # Redis transparent_hugepage
@@ -412,6 +418,7 @@ echo "" >>/etc/sysctl.d/60-ubuntu-nginx-web-server.conf
     echo "net.ipv6.conf.$NET_INTERFACES_WAN.accept_ra_defrtr = 0"
 } >>/etc/sysctl.d/60-ubuntu-nginx-web-server.conf
 
+sudo sysctl -e -p /etc/sysctl.d/60-ubuntu-nginx-web-server.conf
 
 ##################################
 # Add MariaDB 10.3 repository
@@ -670,10 +677,10 @@ echo "##########################################"
 echo " Compiling Nginx with nginx-ee"
 echo "##########################################"
 
-wget -O nginx-build.sh virtubox.net/nginx-ee
-chmod +x nginx-build.sh
+wget -O $HOME/nginx-build.sh https://virtubox.net/nginx-ee
+chmod +x $HOME/nginx-build.sh
 
-./nginx-build.sh
+$HOME/nginx-build.sh
 
 ##################################
 # Add nginx additional conf
