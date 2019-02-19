@@ -8,24 +8,38 @@
 # y = enabled
 
 ##################################
-# MySQL Config
+# MariaDB Config
 ##################################
 
 # install MariaDB server
-MARIADB_SERVER_INSTALL="n"
+
+MARIADB_SERVER_INSTALL="y"
 
 # MariaDB server release
 MARIADB_VERSION_INSTALL="10.3"
+
+##################################
+# Remote MySQL Config
+##################################
 
 # Remote MySQL server
 
 MARIADB_CLIENT_INSTALL="n"
 
 # Remote MySQL server credentials
+# required only if MARIADB_CLIENT_INSTALL="y"
+# leave empty if you do not want to use a remote MySQL server
 
 MARIADB_REMOTE_IP=""
 MARIADB_REMOTE_USER=""
 MARIADB_REMOTE_PASSWORD=""
+
+##################################
+# PHP
+##################################
+
+# Install php7.3
+PHP73_INSTALL="y"
 
 ##################################
 # Additional software
@@ -36,6 +50,9 @@ PROFTPD_INSTALL="n"
 
 # ClamAV Antivirus
 CLAMAV_INSTALL="n"
+
+# Wordops-Dashboard (EasyEngine-dashboard : https://virtubox.github.io/easyengine-dashboard/)
+WO_DASHBOARD_INSTALL="y"
 
 
 

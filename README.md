@@ -47,19 +47,32 @@
 
 ### Usage
 
-Download wo-nginx-setup
+### Interactive install in a single command
 
 ```bash
-wget -O wo-nginx-setup.sh https://raw.githubusercontent.com/VirtuBox/wo-nginx-setup/master/wo-nginx-setup.sh
-chmod +x wo-nginx-setup.sh
+bash <(wget -O - virtubox.net/wo-nginx-setup || curl -sL virtubox.net/wo-nginx-setup) -i
 ```
 
-Launch interactive setup
+### Install configuration with config.inc file
+
+Clone the repository
 
 ```bash
-./wo-nginx-setup.sh -i
+git clone https://github.com/VirtuBox/wo-nginx-setup.git $HOME/wo-nginx-setup
+cd $HOME/wo-nginx-setup
 ```
 
-**Non-interactive setup examples will be available soon**
+Copy config.inc.example into config.inc and edit it
+
+```bash
+cp config.inc.example config.inc
+nano config.inc
+```
+
+Set "y" or "n" to enable or disable features and then run the script
+
+```bash
+chmod +x wo-nginx-setup.sh && ./wo-nginx-setup.sh
+```
 
 Published & maintained by [VirtuBox](https://virtubox.net)

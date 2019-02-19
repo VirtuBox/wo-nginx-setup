@@ -7,7 +7,7 @@
 # Copyright (c) 2018 VirtuBox <contact@virtubox.net>
 # This script is licensed under M.I.T
 # -------------------------------------------------------------------------
-# Version 1.0 - 2019-02-01
+# Version 1.0 - 2019-02-19
 # -------------------------------------------------------------------------
 
 CSI='\033['
@@ -33,15 +33,8 @@ EXTPLORER_VER="2.1.10"
 
 ### Make Sure Sudo available ###
 
-[ ! -x /usr/bin/sudo ] && {
-    apt-get update
-    apt-get install sudo -y
-}
-
-[ ! -x /usr/bin/curl ] && {
-    apt-get update
-    apt-get install curl -y
-}
+[ -z "$(command -v sudo)" ] && { apt-get -y install sudo >>/dev/null 2>&1; }
+[ -z "$(command -v curl)" ] && { apt-get -y install curl >>/dev/null 2>&1; }
 
 
 
@@ -135,13 +128,13 @@ echo ""
 echo "Welcome to Wo-Nginx-setup script."
 echo ""
 
-if [ -d /etc/ee ]; then
+[ -d /etc/ee ] && {
     EE_PREVIOUS_INSTALL=1
-fi
+}
 
-if  [ -d /etc/wo ]; then
+[ -d /etc/wo ] && {
     WO_PREVIOUS_INSTALL=1
-fi
+}
 
 ##################################
 # Menu
@@ -197,44 +190,8 @@ if [ "$INTERACTIVE_SETUP" = "y" ]; then
             read -p "Select an option [y/n]: " PHP73_INSTALL
         done
     fi
-    if [ ! -d /etc/nginx ]; then
-        echo ""
-        echo "#####################################"
-        echo "Nginx"
-        echo "#####################################"
-        echo ""
-        echo "Do you want to compile the latest Nginx Mainline [1] or Stable [2] Release ?"
-        while [[ $NGINX_RELEASE != "1" && $NGINX_RELEASE != "2" ]]; do
-            read -p "Select an option [1-2]: " NGINX_RELEASE
-        done
-        echo ""
-        echo "Do you want Ngx_Pagespeed ? (y/n)"
-        while [[ $PAGESPEED != "y" && $PAGESPEED != "n" ]]; do
-            read -p "Select an option [y/n]: " PAGESPEED
-        done
-        echo ""
-        echo "Do you want NAXSI WAF (still experimental)? (y/n)"
-        while [[ $NAXSI != "y" && $NAXSI != "n" ]]; do
-            read -p "Select an option [y/n]: " NAXSI
-        done
-        echo ""
-        echo "Do you want RTMP streaming module ?"
-        while [[ $RTMP != "y" && $RTMP != "n" ]]; do
-            read -p "Select an option [y/n]: " RTMP
-        done
-    fi
     sleep 1
     echo ""
-    if [ ! -d /etc/ufw ]; then
-        echo ""
-        echo "#####################################"
-        echo "FTP"
-        echo "#####################################"
-        echo "Do you want to install UFW Firewall ? (y/n)"
-        while [[ $UFW_INSTALL != "y" && $UFW_INSTALL != "n" ]]; do
-            read -p "Select an option [y/n]: " UFW_INSTALL
-        done
-    fi
     if [ ! -d /etc/proftpd ]; then
         echo ""
         echo "#####################################"
@@ -263,17 +220,6 @@ if [ "$INTERACTIVE_SETUP" = "y" ]; then
     while [[ $WO_DASHBOARD_INSTALL != "y" && $WO_DASHBOARD_INSTALL != "n" ]]; do
         read -p "Select an option [y/n]: " WO_DASHBOARD_INSTALL
     done
-
-    if [ ! -d /etc/netdata ]; then
-        echo ""
-        echo "#####################################"
-        echo "FTP"
-        echo "#####################################"
-        echo "Do you want to install WordOps Dashboard ? (y/n)"
-        while [[ $NETDATA_INSTALL != "y" && $NETDATA_INSTALL != "n" ]]; do
-            read -p "Select an option [y/n]: " NETDATA_INSTALL
-        done
-    fi
     echo ""
     echo "#####################################"
     echo "Starting server setup in 5 seconds"
@@ -281,7 +227,6 @@ if [ "$INTERACTIVE_SETUP" = "y" ]; then
     echo "#####################################"
     sleep 5
 else
-
     if [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
         echo ""
         echo "What is the IP of your remote database ?"
@@ -368,63 +313,59 @@ echo "##########################################"
 echo " Configuring ufw"
 echo "##########################################"
 
-if [ -z "$UFW_INSTALL" ] || [ "$UFW_INSTALL" = "y" ]; then
-
-    if [ ! -d /etc/ufw ]; then
-        sudo apt-get install ufw -y
-    fi
-
-    # define firewall rules
-
-    sudo ufw logging low
-    sudo ufw default allow outgoing
-    sudo ufw default deny incoming
-
-    # default ssh port
-    sudo ufw allow 22
-
-    # custom ssh port
-    if [ "$CURRENT_SSH_PORT" != "22" ];then
-        sudo ufw allow "$CURRENT_SSH_PORT"
-    fi
-
-    # dns
-    sudo ufw allow 53
-
-    # nginx
-    sudo ufw allow http
-    sudo ufw allow https
-
-    # ntp
-    sudo ufw allow 123
-
-    # dhcp client
-    sudo ufw allow 68
-
-    # dhcp ipv6 client
-    sudo ufw allow 546
-
-    # rsync
-    sudo ufw allow 873
-
-    # easyengine backend
-    sudo ufw allow 22222
-
-    # optional for monitoring
-
-    # SNMP UDP port
-    #sudo ufw allow 161
-
-    # Netdata web interface
-    #sudo ufw allow 1999
-
-    # Librenms linux agent
-    #sudo ufw allow 6556
-
-    # Zabbix-agent
-    #sudo ufw allow 10050
-
+if [ ! -d /etc/ufw ]; then
+    sudo apt-get install ufw -y
 fi
+
+# define firewall rules
+
+sudo ufw logging low
+sudo ufw default allow outgoing
+sudo ufw default deny incoming
+
+# default ssh port
+sudo ufw allow 22
+
+# custom ssh port
+if [ "$CURRENT_SSH_PORT" != "22" ];then
+    sudo ufw allow "$CURRENT_SSH_PORT"
+fi
+
+# dns
+sudo ufw allow 53
+
+# nginx
+sudo ufw allow http
+sudo ufw allow https
+
+# ntp
+sudo ufw allow 123
+
+# dhcp client
+sudo ufw allow 68
+
+# dhcp ipv6 client
+sudo ufw allow 546
+
+# rsync
+sudo ufw allow 873
+
+# easyengine backend
+sudo ufw allow 22222
+
+# optional for monitoring
+
+# SNMP UDP port
+#sudo ufw allow 161
+
+# Netdata web interface
+#sudo ufw allow 1999
+
+# Librenms linux agent
+#sudo ufw allow 6556
+
+# Zabbix-agent
+#sudo ufw allow 10050
 
 ##################################
 # Sysctl tweaks +  open_files limits
@@ -725,40 +666,14 @@ fi
 # Compile latest nginx release from source
 ##################################
 
-# set nginx-ee arguments
-
-if [ -z "$NGINX_RELEASE" ]; then
-    NGINX_BUILD_VER='--mainline'
-else
-    NGINX_BUILD_VER='--stable'
-fi
-
-if [ $PAGESPEED = "y" ]; then
-    BUILD_PAGESPEED='--pagespeed'
-else
-    BUILD_PAGESPEED=''
-fi
-
-if [ $NAXSI = "y" ]; then
-    BUILD_NAXSI='--naxsi'
-else
-    BUILD_NAXSI=''
-fi
-
-if [ $RTMP = "y" ]; then
-    BUILD_RTMP='--rtmp'
-else
-    BUILD_RTMP=''
-fi
-
 echo "##########################################"
 echo " Compiling Nginx with nginx-ee"
 echo "##########################################"
 
-wget -O nginx-build.sh https://virtubox.net/nginx-ee
+wget -O nginx-build.sh virtubox.net/nginx-ee
 chmod +x nginx-build.sh
 
-./nginx-build.sh "$NGINX_BUILD_VER" "$BUILD_PAGESPEED" "$BUILD_NAXSI" "$BUILD_RTMP"
+./nginx-build.sh
 
 ##################################
 # Add nginx additional conf
@@ -866,24 +781,18 @@ if [ $CLAMAV_INSTALL = "y" ]; then
 fi
 
 ##################################
-# Install cheat & nanorc
+# Install nanorc & mysqldump script
 ##################################
+
 echo "##########################################"
-echo " Installing cheat.sh & nanorc & mysqldump script"
+echo " Installing nanorc & mysqldump script"
 echo "##########################################"
 
-if [ ! -x /usr/bin/cht.sh ]; then
-    curl -s https://cht.sh/:cht.sh >/usr/bin/cht.sh
-    chmod +x /usr/bin/cht.sh
+wget -O nanorc.sh https://raw.githubusercontent.com/scopatz/nanorc/master/install.sh
+chmod +x nanorc.sh
+./nanorc.sh
 
-    cd || exit 1
-    echo "alias cheat='cht.sh'" >>.bashrc
-    source $HOME/.bashrc
-fi
-
-wget https://raw.githubusercontent.com/scopatz/nanorc/master/install.sh -qO- | sh
-
-wget -qO mysqldump.sh https://github.com/VirtuBox/bash-scripts/blob/master/backup/mysqldump/mysqldump.sh
+wget -O mysqldump.sh virtubox.net/mysqldump
 chmod +x mysqldump.sh
 
 ##################################
@@ -919,11 +828,12 @@ if [ "$PROFTPD_INSTALL" = "y" ]; then
 
     fi
 fi
-##################################
-# Install Netdata
-##################################
 
-if [ "$NETDATA_INSTALL" = "y" ] || [ -z "$NETDATA_INSTALL" ]; then
+if [ "$WO_DASHBOARD_INSTALL" = "y" ] || [ -z "$WO_DASHBOARD_INSTALL" ]; then
+
+    ##################################
+    # Install Netdata
+    ##################################
 
     if [ ! -d /etc/netdata ]; then
         echo "##########################################"
@@ -956,17 +866,17 @@ if [ "$NETDATA_INSTALL" = "y" ] || [ -z "$NETDATA_INSTALL" ]; then
 
     fi
 
-fi
 
-##################################
-# Install EasyEngine Dashboard
-##################################
 
-echo "##########################################"
-echo " Installing EasyEngine Dashboard"
-echo "##########################################"
+    ##################################
+    # Install EasyEngine Dashboard
+    ##################################
 
-if [ "$WO_DASHBOARD_INSTALL" = "y" ] || [ -z "$WO_DASHBOARD_INSTALL" ]; then
+    echo "##########################################"
+    echo " Installing EasyEngine Dashboard"
+    echo "##########################################"
+
+
 
     if [ ! -d /var/www/22222/htdocs/files ]; then
 
@@ -991,8 +901,6 @@ fi
 # Install Acme.sh
 ##################################
 
-
-
 echo "##########################################"
 echo " Installing Acme.sh"
 echo "##########################################"
@@ -1014,7 +922,7 @@ fi
 # Install cheat.sh
 ##################################
 
-if [ ! -x /usr/bin/cht.sh ]; then
+if [ -z "$(command -v cht.sh)" ]; then
     echo "##########################################"
     echo " Installing cheat.sh"
     echo "##########################################"
