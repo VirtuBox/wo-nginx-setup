@@ -2,6 +2,10 @@ language: bash
 
 dist: xenial
 
+cache:
+  directories:
+  - /usr/local/src
+
 before_install:
   - rm -rf ~/.gnupg
 
@@ -17,5 +21,8 @@ script:
   - sudo bash wo-nginx-setup.sh --travis $TRAVIS_BRANCH || sudo tail -n 100 /var/log/wo/wordops.log
   - sudo wo site create wordops.org --wp || sudo tail -n 100 /var/log/wo/wordops.log
   - sudo wo site create wordops.io --mysql || sudo tail -n 100 /var/log/wo/wordops.log
+  - sudo nginx -t
+  - sudo chown -R travis /usr/local/src
+  - sudo chmod 755 /usr/local/src
 
 
