@@ -19,6 +19,9 @@ CGREEN="${CSI}1;32m"
 ##################################
 
 EXTPLORER_VER="2.1.10"
+WO_DASHBOARD_INSTALL="y"
+MARIADB_SERVER_INSTALL="y"
+PHP73_INSTALL="n"
 
 ##################################
 # Check if user is root
@@ -110,7 +113,7 @@ else
                     EE_CLEANUP="y"
                 ;;
                 --travis)
-                TRAVIS_BUILD="y"
+                    TRAVIS_BUILD="y"
                 ;;
                 -h|--help)
                     _help
@@ -254,10 +257,10 @@ echo "##########################################"
 
 [ -z "$TRAVIS_BUILD" ] && {
 
-sudo apt-get update
-sudo apt-get dist-upgrade -y
-sudo apt-get autoremove -y --purge
-sudo apt-get autoclean -y
+    sudo apt-get update
+    sudo apt-get dist-upgrade -y
+    sudo apt-get autoremove -y --purge
+    sudo apt-get autoclean -y
 
 }
 
@@ -280,8 +283,6 @@ sudo systemctl enable ntp
 
 # increase history size
 export HISTSIZE=10000
-
-
 
 ##################################
 # clone repository
@@ -424,7 +425,7 @@ sudo sysctl -e -p /etc/sysctl.d/60-ubuntu-nginx-web-server.conf
 # Add MariaDB 10.3 repository
 ##################################
 
-if [ -z "$MARIADB_SERVER_INSTALL" ] || [ "$MARIADB_SERVER_INSTALL" = "y" ]; then
+if [ "$MARIADB_SERVER_INSTALL" = "y" ]; then
     [ -z "$MARIADB_VERSION_INSTALL" ] && {
         MARIADB_VERSION_INSTALL="10.3"
     }
@@ -578,11 +579,11 @@ if [ -z "$WO_PREVIOUS_INSTALL" ]; then
 
     if [ -d /etc/mysql ]; then
         # install nginx, php, postfix, memcached
-        wo stack install
+        /usr/local/bin/wo stack install
         # install php7, redis, easyengine backend & phpredisadmin
-        wo stack install --redis --admin --phpredisadmin
+        /usr/local/bin/wo stack install --redis --admin --phpredisadmin
     else
-        wo stack install --nginx --php --redis --wpcli
+        /usr/local/bin/wo stack install --nginx --php --redis --wpcli
     fi
 
     ##################################
@@ -650,14 +651,14 @@ sudo service php7.2-fpm restart
 # commit changes
 git -C /etc/php/ add /etc/php/ && git -C /etc/php/ commit -m "add php7.2 configuration"
 
-if [ "$PHP73_INSTALL" = "y" ] || [ -z "$PHP73_INSTALL" ];  then
+if [ "$PHP73_INSTALL" = "y" ]; then
 
     ##################################
     # Install php7.3-fpm
     ##################################
 
     echo "##########################################"
-    echo " Installing php7.2-fpm"
+    echo " Installing php7.3-fpm"
     echo "##########################################"
 
     sudo apt-get install php7.3-fpm php7.3-xml php7.3-bz2 php7.3-zip php7.3-mysql php7.3-intl php7.3-gd php7.3-curl php7.3-soap php7.3-mbstring php7.3-bcmath -y
@@ -690,12 +691,16 @@ echo "##########################################"
 echo " Configuring Nginx"
 echo "##########################################"
 
-# php7.1 & 7.2 common configurations
+[ -d /etc/nginx/common ] && {
 
-cp -rf $HOME/ubuntu-nginx-web-server/etc/nginx/common/* /etc/nginx/common/
+    # php7.1 & 7.2 common configurations
 
-# commit changes
-git -C /etc/nginx/ add /etc/nginx/ && git -C /etc/nginx/ commit -m "update common configurations"
+    cp -rf $HOME/ubuntu-nginx-web-server/etc/nginx/common/* /etc/nginx/common/
+
+    # commit changes
+    git -C /etc/nginx/ add /etc/nginx/ && git -C /etc/nginx/ commit -m "update common configurations"
+
+}
 
 # common nginx configurations
 
@@ -771,7 +776,7 @@ if [ $CLAMAV_INSTALL = "y" ]; then
     echo " Installing ClamAV"
     echo "##########################################"
 
-    if [ ! -x /usr/bin/clamscan ]; then
+    if [ -z "$(command -v clamscan)" ]; then
         apt-get install clamav -y
     fi
 
@@ -836,7 +841,7 @@ if [ "$PROFTPD_INSTALL" = "y" ]; then
     fi
 fi
 
-if [ "$WO_DASHBOARD_INSTALL" = "y" ] || [ -z "$WO_DASHBOARD_INSTALL" ]; then
+if [ "$WO_DASHBOARD_INSTALL" = "y" ]; then
 
     ##################################
     # Install Netdata
@@ -944,7 +949,7 @@ fi
 # Secure WordOps Dashboard with Acme.sh
 ##################################
 
-if [ "$SECURE_22222" = "y" ] || [ -z "$SECURE_22222" ]; then
+if [ "$SECURE_22222" = "y" ]; then
 
     MY_HOSTNAME=$(/bin/hostname -f)
     MY_IP=$(curl -s v4.vtbox.net)
