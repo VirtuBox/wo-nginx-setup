@@ -149,7 +149,7 @@ echo ""
 
 
 if [ "$INTERACTIVE_SETUP" = "y" ]; then
-    if [ ! -d /etc/mysql ]; then
+    if [ -z "$(command -v mysqladmin)" ]; then
         echo "#####################################"
         echo "MariaDB server"
         echo "#####################################"
@@ -208,7 +208,7 @@ if [ "$INTERACTIVE_SETUP" = "y" ]; then
             read -p "Select an option [y/n]: " PROFTPD_INSTALL
         done
     fi
-    if [ ! -x /usr/bin/clamscan ]; then
+    if [ -z "$(command -v clamscan)" ]; then
         echo ""
         echo "#####################################"
         echo "FTP"
@@ -227,6 +227,16 @@ if [ "$INTERACTIVE_SETUP" = "y" ]; then
         read -p "Select an option [y/n]: " WO_DASHBOARD_INSTALL
     done
     echo ""
+    if [ "$EE_PREVIOUS_INSTALL" = "1" ]; then
+    echo "#####################################"
+    echo "EasyEngine Cleanup"
+    echo "#####################################"
+    echo "Do you want to cleanup previous EasyEngine install ? (y/n)"
+    while [[ $EE_CLEANUP != "y" && $EE_CLEANUP != "n" ]]; do
+        read -p "Select an option [y/n]: " EE_CLEANUP
+    done
+    echo ""
+    fi
     echo "#####################################"
     echo "Starting server setup in 5 seconds"
     echo "use CTRL + C if you want to cancel installation"
