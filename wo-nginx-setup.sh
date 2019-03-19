@@ -185,18 +185,18 @@ if [ "$INTERACTIVE_SETUP" = "y" ]; then
         fi
         sleep 1
     fi
-    if [ ! -d /etc/php/7.3/fpm/pool.d ]; then
-        echo ""
-        echo "#####################################"
-        echo "PHP"
-        echo "#####################################"
-        echo ""
-        echo "Do you want to install PHP 7.3 ? (y/n)"
-        while [[ $PHP73_INSTALL != "y" && $PHP73_INSTALL != "n" ]]; do
-            read -p "Select an option [y/n]: " PHP73_INSTALL
-        done
-    fi
-    sleep 1
+    #    if [ ! -d /etc/php/7.3/fpm/pool.d ]; then
+    #        echo ""
+    #        echo "#####################################"
+    #     echo "PHP"
+    #     echo "#####################################"
+    #     echo ""
+    #     echo "Do you want to install PHP 7.3 ? (y/n)"
+    #     while [[ $PHP73_INSTALL != "y" && $PHP73_INSTALL != "n" ]]; do
+    #         read -p "Select an option [y/n]: " PHP73_INSTALL
+    #     done
+    # fi
+    # sleep 1
     echo ""
     if [ ! -d /etc/proftpd ]; then
         echo ""
@@ -591,9 +591,9 @@ if [ -z "$WO_PREVIOUS_INSTALL" ]; then
         # install nginx, php, postfix, memcached
         /usr/local/bin/wo stack install
         # install php7, redis, easyengine backend & phpredisadmin
-        /usr/local/bin/wo stack install --redis --admin --phpredisadmin
+        /usr/local/bin/wo stack install --redis --php73 --admin --phpredisadmin
     else
-        /usr/local/bin/wo stack install --nginx --php --redis --wpcli
+        /usr/local/bin/wo stack install --nginx --php73 --redis --wpcli
     fi
 
     ##################################
@@ -643,42 +643,42 @@ if [ -z "$WO_PREVIOUS_INSTALL" ]; then
     sudo -u www-data -H curl https://raw.githubusercontent.com/scopatz/nanorc/master/install.sh | sh
 fi
 
-##################################
-# Install php7.2-fpm
-##################################
+# ##################################
+# # Install php7.2-fpm
+# ##################################
 
-echo "##########################################"
-echo " Installing php7.2-fpm"
-echo "##########################################"
+# echo "##########################################"
+# echo " Installing php7.2-fpm"
+# echo "##########################################"
 
-sudo apt-get install php7.2-fpm php7.2-xml php7.2-bz2 php7.2-zip php7.2-mysql php7.2-intl php7.2-gd \
-php7.2-curl php7.2-soap php7.2-mbstring php7.2-xsl php7.2-bcmath -y
+# sudo apt-get install php7.2-fpm php7.2-xml php7.2-bz2 php7.2-zip php7.2-mysql php7.2-intl php7.2-gd \
+# php7.2-curl php7.2-soap php7.2-mbstring php7.2-xsl php7.2-bcmath -y
 
-# copy php7.2 config files
-sudo cp -rf $HOME/ubuntu-nginx-web-server/etc/php/7.2/* /etc/php/7.2/
-sudo service php7.2-fpm restart
+# # copy php7.2 config files
+# sudo cp -rf $HOME/ubuntu-nginx-web-server/etc/php/7.2/* /etc/php/7.2/
+# sudo service php7.2-fpm restart
 
-# commit changes
-git -C /etc/php/ add /etc/php/ && git -C /etc/php/ commit -m "add php7.2 configuration"
+# # commit changes
+# git -C /etc/php/ add /etc/php/ && git -C /etc/php/ commit -m "add php7.2 configuration"
 
-if [ "$PHP73_INSTALL" = "y" ]; then
+# if [ "$PHP73_INSTALL" = "y" ]; then
 
-    ##################################
-    # Install php7.3-fpm
-    ##################################
+#     ##################################
+#     # Install php7.3-fpm
+#     ##################################
 
-    echo "##########################################"
-    echo " Installing php7.3-fpm"
-    echo "##########################################"
+#     echo "##########################################"
+#     echo " Installing php7.3-fpm"
+#     echo "##########################################"
 
-    sudo apt-get install php7.3-fpm php7.3-xml php7.3-bz2 php7.3-zip php7.3-mysql php7.3-intl php7.3-gd php7.3-curl php7.3-soap php7.3-mbstring php7.3-bcmath -y
+#     sudo apt-get install php7.3-fpm php7.3-xml php7.3-bz2 php7.3-zip php7.3-mysql php7.3-intl php7.3-gd php7.3-curl php7.3-soap php7.3-mbstring php7.3-bcmath -y
 
-    sudo cp -rf $HOME/ubuntu-nginx-web-server/etc/php/7.3/* /etc/php/7.3/
-    sudo service php7.3-fpm restart
+#     sudo cp -rf $HOME/ubuntu-nginx-web-server/etc/php/7.3/* /etc/php/7.3/
+#     sudo service php7.3-fpm restart
 
-    git -C /etc/php/ add /etc/php/ && git -C /etc/php/ commit -m "add php7.3 configuration"
+#     git -C /etc/php/ add /etc/php/ && git -C /etc/php/ commit -m "add php7.3 configuration"
 
-fi
+# fi
 
 ##################################
 # Compile latest nginx release from source
@@ -736,19 +736,19 @@ rm $HOME/nginx-cloudflare-real-ip.sh
 # commit changes
 git -C /etc/nginx/ add /etc/nginx/ && git -C /etc/nginx/ commit -m "update nginx.conf and setup cloudflare visitor real IP restore"
 
-# check nginx configuration
-CONF_22222=$(grep -c netdata /etc/nginx/sites-available/22222)
-CONF_UPSTREAM=$(grep -c netdata /etc/nginx/conf.d/upstream.conf)
+# # check nginx configuration
+# CONF_22222=$(grep netdata /etc/nginx/sites-available/22222)
+# CONF_UPSTREAM=$(grep netdata /etc/nginx/conf.d/upstream.conf)
 
-if [ "$CONF_22222" = "0" ]; then
-    # add nginx reverse-proxy for netdata on https://yourserver.hostname:22222/netdata/
-    sudo cp -f $HOME/ubuntu-nginx-web-server/etc/nginx/sites-available/22222 /etc/nginx/sites-available/22222
-fi
+# if [ -z "$CONF_22222" ]; then
+#     # add nginx reverse-proxy for netdata on https://yourserver.hostname:22222/netdata/
+#     sudo cp -f $HOME/ubuntu-nginx-web-server/etc/nginx/sites-available/22222 /etc/nginx/sites-available/22222
+# fi
 
-if [ "$CONF_UPSTREAM" = "0" ]; then
-    # add netdata, php7.1 and php7.2 upstream
-    sudo cp -f $HOME/ubuntu-nginx-web-server/etc/nginx/conf.d/upstream.conf /etc/nginx/conf.d/upstream.conf
-fi
+# if [ -z "$CONF_UPSTREAM" ]; then
+#     # add netdata, php7.1 and php7.2 upstream
+#     sudo cp -f $HOME/ubuntu-nginx-web-server/etc/nginx/conf.d/upstream.conf /etc/nginx/conf.d/upstream.conf
+# fi
 
 VERIFY_NGINX_CONFIG=$(nginx -t 2>&1 | grep failed)
 echo "##########################################"
@@ -1012,7 +1012,7 @@ if [ "$EE_CLEANUP" = "y" ]; then
     tar -I pigz -cvf $HOME/ee-backup.tar.gz /etc/ee /var/lib/ee /usr/lib/ee/templates
     echo "Backup of the previous EasyEngine configurations is available here : $HOME/ee-backup.tar.gz"
 
-    rm -rf /etc/ee /var/lib/ee /usr/lib/ee
+    rm -rf /etc/ee /var/lib/ee /usr/lib/ee /usr/local/bin/ee /etc/bash_completion.d/ee_auto.rc
     rm -rf /usr/local/lib/python3.6/dist-packages/ee-3.*
 
     apt-get -y autoremove php5.6-fpm php5.6-common --purge
