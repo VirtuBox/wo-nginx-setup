@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # -------------------------------------------------------------------------
 #  WO-NGINX-SETUP - automated WordOps server setup script
 # -------------------------------------------------------------------------
@@ -21,7 +21,7 @@ CGREEN="${CSI}1;32m"
 EXTPLORER_VER="2.1.10"
 WO_DASHBOARD_INSTALL="y"
 MARIADB_SERVER_INSTALL="y"
-PHP73_INSTALL="n"
+
 
 ##################################
 # Check if user is root
@@ -587,33 +587,26 @@ if [ -z "$WO_PREVIOUS_INSTALL" ]; then
     echo " Installing WordOps Stack"
     echo "##########################################"
 
-    if [ -d /etc/mysql ]; then
-        # install nginx, php, postfix, memcached
         /usr/local/bin/wo stack install
-        # install php7, redis, easyengine backend & phpredisadmin
-        /usr/local/bin/wo stack install --redis --php73 --admin --phpredisadmin
-    else
-        /usr/local/bin/wo stack install --nginx --php73 --redis --wpcli
-    fi
 
     ##################################
     # Fix phpmyadmin install
     ##################################
-    echo "##########################################"
-    echo " Updating phpmyadmin"
-    echo "##########################################"
+    # echo "##########################################"
+    # echo " Updating phpmyadmin"
+    # echo "##########################################"
 
-    # install composer
-    cd ~/ || exit
-    curl -sS https://getcomposer.org/installer | php
-    mv composer.phar /usr/bin/composer
+    # # install composer
+    # cd ~/ || exit
+    # curl -sS https://getcomposer.org/installer | php
+    # mv composer.phar /usr/bin/composer
 
-    # change owner of /var/www to allow composer cache
-    chown www-data:www-data /var/www
-    # update phpmyadmin with composer
-    if [ -d /var/www/22222/htdocs/db/pma ]; then
-        sudo -u www-data -H composer update -d /var/www/22222/htdocs/db/pma/
-    fi
+    # # change owner of /var/www to allow composer cache
+    # chown www-data:www-data /var/www
+    # # update phpmyadmin with composer
+    # if [ -d /var/www/22222/htdocs/db/pma ]; then
+    #     sudo -u www-data -H composer update -d /var/www/22222/htdocs/db/pma/
+    # fi
 
     ##################################
     # Allow www-data shell access for SFTP + add .bashrc settings et completion
@@ -700,23 +693,6 @@ $HOME/nginx-build.sh
 echo "##########################################"
 echo " Configuring Nginx"
 echo "##########################################"
-
-[ -d /etc/nginx/common ] && {
-
-    # php7.1 & 7.2 common configurations
-
-    cp -rf $HOME/ubuntu-nginx-web-server/etc/nginx/common/* /etc/nginx/common/
-
-    # commit changes
-    git -C /etc/nginx/ add /etc/nginx/ && git -C /etc/nginx/ commit -m "update common configurations"
-
-}
-
-# common nginx configurations
-
-cp -rf $HOME/ubuntu-nginx-web-server/etc/nginx/conf.d/* /etc/nginx/conf.d/
-cp -f $HOME/ubuntu-nginx-web-server/etc/nginx/proxy_params /etc/nginx/proxy_params
-cp -f $HOME/ubuntu-nginx-web-server/etc/nginx/mime.types /etc/nginx/mime.types
 
 # commit changes
 git -C /etc/nginx/ add /etc/nginx/ && git -C /etc/nginx/ commit -m "update conf.d configurations"
@@ -854,43 +830,6 @@ fi
 if [ "$WO_DASHBOARD_INSTALL" = "y" ]; then
 
     ##################################
-    # Install Netdata
-    ##################################
-
-    if [ ! -d /etc/netdata ]; then
-        echo "##########################################"
-        echo " Installing Netdata"
-        echo "##########################################"
-
-        ## optimize netdata resources usage
-        echo 1 >/sys/kernel/mm/ksm/run
-        echo 1000 >/sys/kernel/mm/ksm/sleep_millisecs
-
-        ## install nedata
-        wget -O kickstart.sh https://my-netdata.io/kickstart.sh
-        chmod +x kickstart.sh
-        ./kickstart.sh all --dont-wait >>/tmp/ubuntu-nginx-web-server.log 2>&1
-        rm kickstart.sh
-
-        if [ "$MARIADB_SERVER_INSTALL" = "y" ]; then
-            mysql -e  "create user 'netdata'@'localhost';"
-            mysql -e  "grant usage on *.* to 'netdata'@'localhost';"
-            mysql -e  "flush privileges;"
-            elif [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
-            mysql -e  "create user 'netdata'@'%';"
-            mysql -e  "grant usage on *.* to 'netdata'@'%';"
-            mysql -e  "flush privileges;"
-        fi
-
-        ## disable email notifigrep -cions
-        sudo sed -i 's/SEND_EMAIL="YES"/SEND_EMAIL="NO"/' /usr/lib/netdata/conf.d/health_alarm_notify.conf
-        sudo service netdata restart
-
-    fi
-
-
-
-    ##################################
     # Install EasyEngine Dashboard
     ##################################
 
@@ -917,27 +856,6 @@ if [ "$WO_DASHBOARD_INSTALL" = "y" ]; then
     cp -rf /tmp/easyengine-dashboard/* /var/www/22222/htdocs/
     chown -R www-data:www-data /var/www/22222/htdocs
 
-fi
-
-##################################
-# Install Acme.sh
-##################################
-
-echo "##########################################"
-echo " Installing Acme.sh"
-echo "##########################################"
-
-# install acme.sh if needed
-echo ""
-echo "checking if acme.sh is already installed"
-echo ""
-if [ ! -f $HOME/.acme.sh/acme.sh ]; then
-    echo ""
-
-    echo ""
-    wget -O - https://get.acme.sh | sh
-    cd || exit
-    source $HOME/.bashrc
 fi
 
 ##################################

@@ -15,7 +15,6 @@
 - ClamAV Antivirus
 - Netdata
 - Proftpd
-- Acme.sh with [ee-acme-sh](https://virtubox.github.io/ee-acme-sh/)
 
 * * *
 
@@ -26,7 +25,6 @@
 - Automated MariaDB server or client installation (10.1/10.2/10.3)
 - Linux server tweaks
 - [WordOps](https://github.com/WordOps/WordOps) automated installation
-- php7.2-fpm/php7.3-fpm installation & configuration
 - Latest Nginx release compiled with [nginx-ee](https://virtubox.github.io/nginx-ee/)
 - UFW configuration with custom SSH port
 - Fail2ban Installation & Configuration
