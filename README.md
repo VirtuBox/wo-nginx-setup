@@ -48,7 +48,7 @@
 ### Interactive install in a single command
 
 ```bash
-bash <(wget -O - virtubox.net/wo-nginx-setup || curl -sL virtubox.net/wo-nginx-setup) -i
+bash <(wget -O - vtb.cx/wo-nginx-setup || curl -sL vtb.cx/wo-nginx-setup) -i
 ```
 
 ### Install configuration with config.inc file
