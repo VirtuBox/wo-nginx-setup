@@ -18,7 +18,6 @@ CGREEN="${CSI}1;32m"
 # Variables
 ##################################
 
-EXTPLORER_VER="2.1.10"
 WO_DASHBOARD_INSTALL="y"
 MARIADB_SERVER_INSTALL="y"
 

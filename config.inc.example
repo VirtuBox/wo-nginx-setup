@@ -51,9 +51,5 @@ PROFTPD_INSTALL="n"
 # ClamAV Antivirus
 CLAMAV_INSTALL="n"
 
-# Wordops-Dashboard (EasyEngine-dashboard : https://virtubox.github.io/easyengine-dashboard/)
+# Wordops-Dashboard (WordOps-dashboard : https://github.com/WordOps/wordops-dashboard)
 WO_DASHBOARD_INSTALL="y"
-
-
-
-

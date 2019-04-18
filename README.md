@@ -29,7 +29,7 @@
 - UFW configuration with custom SSH port
 - Fail2ban Installation & Configuration
 - Cloudflare visitor real IP configuration
-- [Netdata](https://github.com/firehol/netdata/) and [EasyEngine-Dashboard](https://virtubox.github.io/easyengine-dashboard/) installation
+- [WordOps-Dashboard](https://github.com/WordOps/wordops-dashboard) installation
 - Proftpd installation & configuration
 
 ### Compatibility
