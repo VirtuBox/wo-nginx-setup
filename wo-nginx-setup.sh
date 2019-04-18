@@ -103,9 +103,6 @@ else
                     MARIADB_VERSION_INSTALL="$2"
                     shift
                 ;;
-                --secure-backend)
-                    SECURE_22222="y"
-                ;;
                 --clamav)
                     CLAMAV_INSTALL="y"
                 ;;
@@ -681,7 +678,7 @@ echo "##########################################"
 echo " Compiling Nginx with nginx-ee"
 echo "##########################################"
 
-wget -O $HOME/nginx-build.sh https://virtubox.net/nginx-ee
+wget -O $HOME/nginx-build.sh vtb.cx/nginx-ee
 chmod +x $HOME/nginx-build.sh
 
 $HOME/nginx-build.sh
@@ -694,11 +691,11 @@ echo "##########################################"
 echo " Configuring Nginx"
 echo "##########################################"
 
-# commit changes
-git -C /etc/nginx/ add /etc/nginx/ && git -C /etc/nginx/ commit -m "update conf.d configurations"
-
 # optimized nginx.config
 cp -f $HOME/ubuntu-nginx-web-server/etc/nginx/nginx.conf /etc/nginx/nginx.conf
+
+# commit changes
+git -C /etc/nginx/ add /etc/nginx/ && git -C /etc/nginx/ commit -m "update conf.d configurations"
 
 # reduce nginx logs rotation
 sed -i 's/size 10M/weekly/' /etc/logrotate.d/nginx
@@ -842,7 +839,7 @@ if [ "$WO_DASHBOARD_INSTALL" = "y" ]; then
     if [ ! -d /var/www/22222/htdocs/files ]; then
 
         mkdir -p /var/www/22222/htdocs/files
-        wget -qO /var/www/22222/htdocs/files/ex.zip http://extplorer.net/attachments/download/74/eXtplorer_$EXTPLORER_VER.zip
+        wget -qO /var/www/22222/htdocs/files/ex.zip https://extplorer.net/attachments/78/eXtplorer_2.1.12.zip
         cd /var/www/22222/htdocs/files || exit 1
         unzip ex.zip
         rm ex.zip
@@ -850,11 +847,14 @@ if [ "$WO_DASHBOARD_INSTALL" = "y" ]; then
 
     cd /var/www/22222 || exit
 
-    ## download latest version of EasyEngine-dashboard
+    ## download latest version of Wordops-dashboard
     cd /tmp || exit
-    git clone https://github.com/VirtuBox/easyengine-dashboard.git
-    cp -rf /tmp/easyengine-dashboard/* /var/www/22222/htdocs/
+    git clone https://github.com/WordOps/wordops-dashboard.git
+    cp -rf /tmp/wordops-dashboard/* /var/www/22222/htdocs/
+    mv /tmp/wordops-dashboard/.gitignore /var/www/22222/htdocs/.gitignore
+    mv /tmp/wordops-dashboard/.git /var/www/22222/htdocs/.git
     chown -R www-data:www-data /var/www/22222/htdocs
+    rm -rf /tmp/wordops-dashboard
 
 fi
 
@@ -877,46 +877,46 @@ fi
 # Secure WordOps Dashboard with Acme.sh
 ##################################
 
-if [ "$SECURE_22222" = "y" ]; then
+# if [ "$SECURE_22222" = "y" ]; then
 
-    MY_HOSTNAME=$(/bin/hostname -f)
-    MY_IP=$(curl -s v4.vtbox.net)
-    MY_HOSTNAME_IP=$(/usr/bin/dig +short @8.8.8.8 "$MY_HOSTNAME")
+#     MY_HOSTNAME=$(/bin/hostname -f)
+#     MY_IP=$(curl -s v4.vtbox.net)
+#     MY_HOSTNAME_IP=$(/usr/bin/dig +short @8.8.8.8 "$MY_HOSTNAME")
 
-    if [ "$MY_IP" = "$MY_HOSTNAME_IP" ]; then
-        echo "##########################################"
-        echo " Securing EasyEngine Backend"
-        echo "##########################################"
-        apt-get install -y socat
+#     if [ "$MY_IP" = "$MY_HOSTNAME_IP" ]; then
+#         echo "##########################################"
+#         echo " Securing EasyEngine Backend"
+#         echo "##########################################"
+#         apt-get install -y socat
 
 
-        if [ ! -d $HOME/.acme.sh/${MY_HOSTNAME}_ecc ]; then
-            $HOME/.acme.sh/acme.sh --issue -d "$MY_HOSTNAME" -k ec-384 --standalone --pre-hook "service nginx stop" --post-hook "service nginx start"
-        fi
+#         if [ ! -d $HOME/.acme.sh/${MY_HOSTNAME}_ecc ]; then
+#             /etc/letsencrypt/acme.sh --config-home /etc/letsencrypt/config --issue -d "$MY_HOSTNAME" -k ec-384 --standalone --pre-hook "service nginx stop" --post-hook "service nginx start"
+#         fi
 
-        if [ -d /etc/letsencrypt/live/$MY_HOSTNAME ]; then
-            rm -rf /etc/letsencrypt/live/$MY_HOSTNAME/*
-        else
-            mkdir -p /etc/letsencrypt/live/$MY_HOSTNAME
-        fi
+#         if [ -d /etc/letsencrypt/live/$MY_HOSTNAME ]; then
+#             rm -rf /etc/letsencrypt/live/$MY_HOSTNAME/*
+#         else
+#             mkdir -p /etc/letsencrypt/live/$MY_HOSTNAME
+#         fi
 
-        # install the cert and reload nginx
-        if [ -f $HOME/.acme.sh/${MY_HOSTNAME}_ecc/fullchain.cer ]; then
-            $HOME/.acme.sh/acme.sh --install-cert -d ${MY_HOSTNAME} --ecc \
-            --cert-file /etc/letsencrypt/live/${MY_HOSTNAME}/cert.pem \
-            --key-file /etc/letsencrypt/live/${MY_HOSTNAME}/key.pem \
-            --fullchain-file /etc/letsencrypt/live/${MY_HOSTNAME}/fullchain.pem \
-            --reloadcmd "service nginx restart"
-        fi
+#         # install the cert and reload nginx
+#         if [ -f $HOME/.acme.sh/${MY_HOSTNAME}_ecc/fullchain.cer ]; then
+#             /etc/letsencrypt/acme.sh --config-home /etc/letsencrypt/config --install-cert -d ${MY_HOSTNAME} --ecc \
+#             --cert-file /etc/letsencrypt/live/${MY_HOSTNAME}/cert.pem \
+#             --key-file /etc/letsencrypt/live/${MY_HOSTNAME}/key.pem \
+#             --fullchain-file /etc/letsencrypt/live/${MY_HOSTNAME}/fullchain.pem \
+#             --reloadcmd "service nginx restart"
+#         fi
 
-        if [ -f /etc/letsencrypt/live/${MY_HOSTNAME}/fullchain.pem ] && [ -f /etc/letsencrypt/live/${MY_HOSTNAME}/key.pem ]; then
-            sed -i "s/ssl_certificate \\/var\\/www\\/22222\\/cert\\/22222.crt;/ssl_certificate \\/etc\\/letsencrypt\\/live\\/${MY_HOSTNAME}\\/fullchain.pem;/" /etc/nginx/sites-available/22222
-            sed -i "s/ssl_certificate_key \\/var\\/www\\/22222\\/cert\\/22222.key;/ssl_certificate_key    \\/etc\\/letsencrypt\\/live\\/${MY_HOSTNAME}\\/key.pem;/" /etc/nginx/sites-available/22222
-        fi
-        service nginx reload
+#         if [ -f /etc/letsencrypt/live/${MY_HOSTNAME}/fullchain.pem ] && [ -f /etc/letsencrypt/live/${MY_HOSTNAME}/key.pem ]; then
+#             sed -i "s/ssl_certificate \\/var\\/www\\/22222\\/cert\\/22222.crt;/ssl_certificate \\/etc\\/letsencrypt\\/live\\/${MY_HOSTNAME}\\/fullchain.pem;/" /etc/nginx/sites-available/22222
+#             sed -i "s/ssl_certificate_key \\/var\\/www\\/22222\\/cert\\/22222.key;/ssl_certificate_key    \\/etc\\/letsencrypt\\/live\\/${MY_HOSTNAME}\\/key.pem;/" /etc/nginx/sites-available/22222
+#         fi
+#         service nginx reload
 
-    fi
-fi
+#     fi
+# fi
 
 ##################################
 # Cleanup previous EasyEngine install
@@ -926,12 +926,6 @@ if [ "$EE_CLEANUP" = "y" ]; then
     echo "##########################################"
     echo " Cleaning up previous EasyEngine installation"
     echo "##########################################"
-
-    tar -I pigz -cvf $HOME/ee-backup.tar.gz /etc/ee /var/lib/ee /usr/lib/ee/templates
-    echo "Backup of the previous EasyEngine configurations is available here : $HOME/ee-backup.tar.gz"
-
-    rm -rf /etc/ee /var/lib/ee /usr/lib/ee /usr/local/bin/ee /etc/bash_completion.d/ee_auto.rc
-    rm -rf /usr/local/lib/python3.6/dist-packages/ee-3.*
 
     apt-get -y autoremove php5.6-fpm php5.6-common --purge
     apt-get -y autoremove php7.0-fpm php7.0-common --purge
