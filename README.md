@@ -6,7 +6,7 @@
 
 ## Server Stack
 
-- Nginx 1.15.x/1.14 with [nginx-ee](https://virtubox.github.io/nginx-ee/)
+- Nginx 1.16.x/1.15 with [nginx-ee](https://virtubox.github.io/nginx-ee/)
 - PHP-FPM 7.2/7.3
 - MariaDB 10.1/10.2/10.3
 - REDIS 5.0
@@ -45,13 +45,33 @@
 
 ### Usage
 
-### Interactive install in a single command
+#### Interactive install in a single command
 
 ```bash
 bash <(wget -O - vtb.cx/wo-nginx-setup || curl -sL vtb.cx/wo-nginx-setup) -i
 ```
 
-### Install configuration with config.inc file
+#### Alternative method : Clone the repository
+
+```bash
+git clone https://github.com/VirtuBox/wo-nginx-setup.git $HOME/wo-nginx-setup
+cd $HOME/wo-nginx-setup
+```
+
+Make wo-nginx-setup executable
+
+```bash
+chmod +x $HOME/wo-nginx-setup
+```
+
+Launch install
+
+```bash
+$HOME/wo-nginx-setup <options>
+```
+
+
+#### Set configuration with config.inc file
 
 Clone the repository
 
