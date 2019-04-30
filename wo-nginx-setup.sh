@@ -263,10 +263,10 @@ echo "##########################################"
 
 [ -z "$TRAVIS_BUILD" ] && {
 
-    sudo apt-get update
-    sudo apt-get dist-upgrade -y
-    sudo apt-get autoremove -y --purge
-    sudo apt-get autoclean -y
+    apt-get update
+    apt-get dist-upgrade -y
+    apt-get autoremove -y --purge
+    apt-get autoclean -y
 
 }
 
@@ -282,10 +282,10 @@ echo "##########################################"
 echo " Installing useful packages"
 echo "##########################################"
 
-sudo apt-get install haveged curl git unzip zip fail2ban htop nload nmon tar gzip ntp gnupg gnupg2 wget pigz tree ccze mycli screen tmux -y
+apt-get install haveged curl git unzip zip fail2ban htop nload nmon tar gzip ntp gnupg gnupg2 wget pigz tree ccze mycli screen tmux -y
 
 # ntp time
-sudo systemctl enable ntp
+systemctl enable ntp
 
 # increase history size
 export HISTSIZE=10000
@@ -311,13 +311,13 @@ fi
 CURRENT_SSH_PORT=$(grep "Port" /etc/ssh/sshd_config | awk -F " " '{print $2}')
 
 # download secure sshd_config
-sudo cp -f $HOME/ubuntu-nginx-web-server/etc/ssh/sshd_config /etc/ssh/sshd_config
+cp -f $HOME/ubuntu-nginx-web-server/etc/ssh/sshd_config /etc/ssh/sshd_config
 
 # change ssh default port
-sudo sed -i "s/Port 22/Port $CURRENT_SSH_PORT/" /etc/ssh/sshd_config
+sed -i "s/Port 22/Port $CURRENT_SSH_PORT/" /etc/ssh/sshd_config
 
 # restart ssh service
-sudo service ssh restart
+service ssh restart
 
 ##################################
 # ufw
@@ -328,58 +328,58 @@ echo " Configuring ufw"
 echo "##########################################"
 
 if [ ! -d /etc/ufw ]; then
-    sudo apt-get install ufw -y
+    apt-get install ufw -y
 fi
 
 # define firewall rules
 
-sudo ufw logging low
-sudo ufw default allow outgoing
-sudo ufw default deny incoming
+ufw logging low
+ufw default allow outgoing
+ufw default deny incoming
 
 # default ssh port
-sudo ufw allow 22
+ufw allow 22
 
 # custom ssh port
 if [ "$CURRENT_SSH_PORT" != "22" ];then
-    sudo ufw allow "$CURRENT_SSH_PORT"
+    ufw allow "$CURRENT_SSH_PORT"
 fi
 
 # dns
-sudo ufw allow 53
+ufw allow 53
 
 # nginx
-sudo ufw allow http
-sudo ufw allow https
+ufw allow http
+ufw allow https
 
 # ntp
-sudo ufw allow 123
+ufw allow 123
 
 # dhcp client
-sudo ufw allow 68
+ufw allow 68
 
 # dhcp ipv6 client
-sudo ufw allow 546
+ufw allow 546
 
 # rsync
-sudo ufw allow 873
+ufw allow 873
 
 # easyengine backend
-sudo ufw allow 22222
+ufw allow 22222
 
 # optional for monitoring
 
 # SNMP UDP port
-#sudo ufw allow 161
+#ufw allow 161
 
 # Netdata web interface
-#sudo ufw allow 1999
+#ufw allow 1999
 
 # Librenms linux agent
-#sudo ufw allow 6556
+#ufw allow 6556
 
 # Zabbix-agent
-#sudo ufw allow 10050
+#ufw allow 10050
 
 ##################################
 # Sysctl tweaks +  open_files limits
@@ -389,8 +389,8 @@ echo "##########################################"
 echo " Applying Linux Kernel tweaks"
 echo "##########################################"
 
-sudo cp -f $HOME/ubuntu-nginx-web-server/etc/sysctl.d/60-ubuntu-nginx-web-server.conf /etc/sysctl.d/60-ubuntu-nginx-web-server.conf
-sudo cp -f $HOME/ubuntu-nginx-web-server/etc/security/limits.conf /etc/security/limits.conf
+cp -f $HOME/ubuntu-nginx-web-server/etc/sysctl.d/60-ubuntu-nginx-web-server.conf /etc/sysctl.d/60-ubuntu-nginx-web-server.conf
+cp -f $HOME/ubuntu-nginx-web-server/etc/security/limits.conf /etc/security/limits.conf
 
 # Redis transparent_hugepage
 echo never >/sys/kernel/mm/transparent_hugepage/enabled
@@ -425,7 +425,7 @@ echo "" >>/etc/sysctl.d/60-ubuntu-nginx-web-server.conf
     echo "net.ipv6.conf.$NET_INTERFACES_WAN.accept_ra_defrtr = 0"
 } >>/etc/sysctl.d/60-ubuntu-nginx-web-server.conf
 
-sudo sysctl -e -p /etc/sysctl.d/60-ubuntu-nginx-web-server.conf
+sysctl -e -p /etc/sysctl.d/60-ubuntu-nginx-web-server.conf
 
 ##################################
 # Add MariaDB 10.3 repository
@@ -445,7 +445,7 @@ if [ "$MARIADB_SERVER_INSTALL" = "y" ]; then
         chmod +x mariadb_repo_setup
         ./mariadb_repo_setup --mariadb-server-version="$MARIADB_VERSION_INSTALL" --skip-maxscale -y
         rm mariadb_repo_setup
-        sudo apt-get update
+        apt-get update
 
     fi
 
@@ -463,8 +463,8 @@ if [ "$MARIADB_SERVER_INSTALL" = "y" ]; then
         # generate random password
         MYSQL_ROOT_PASS="$(date +%s | sha256sum | base64 | head -c 32)"
         export DEBIAN_FRONTEND=noninteractive                             # to avoid prompt during installation
-        sudo debconf-set-selections <<<"mariadb-server-${MARIADB_VERSION_INSTALL} mysql-server/root_password password ${MYSQL_ROOT_PASS}"
-        sudo debconf-set-selections <<<"mariadb-server-${MARIADB_VERSION_INSTALL} mysql-server/root_password_again password ${MYSQL_ROOT_PASS}"
+        debconf-set-selections <<<"mariadb-server-${MARIADB_VERSION_INSTALL} mysql-server/root_password password ${MYSQL_ROOT_PASS}"
+        debconf-set-selections <<<"mariadb-server-${MARIADB_VERSION_INSTALL} mysql-server/root_password_again password ${MYSQL_ROOT_PASS}"
         # install mariadb server
         DEBIAN_FRONTEND=noninteractive apt-get install -qq mariadb-server # -qq implies -y --force-yes
         # save credentials in .my.cnf and copy it in /etc/mysql/conf.d for easyengine
@@ -506,16 +506,16 @@ if [ "$MARIADB_SERVER_INSTALL" = "y" ]; then
         # LOG_FILE_SIZE=$(( $AVAILABLE_MEMORY / 16000 ))
         # LOG_BUFFER_SIZE=$(( $AVAILABLE_MEMORY / 8000 ))
 
-        # sudo sed -i "s/innodb_buffer_pool_size = 2G/innodb_buffer_pool_size = $BUFFER_POOL_SIZE\\M/" /etc/mysql/my.cnf
-        # sudo sed -i "s/innodb_log_file_size    = 256M/innodb_log_file_size    = $LOG_FILE_SIZE\\M/" /etc/mysql/my.cnf
-        # sudo sed -i "s/innodb_log_buffer_size  = 512M/innodb_log_buffer_size  = $LOG_BUFFER_SIZE\\M/" /etc/mysql/my.cnf
+        # sed -i "s/innodb_buffer_pool_size = 2G/innodb_buffer_pool_size = $BUFFER_POOL_SIZE\\M/" /etc/mysql/my.cnf
+        # sed -i "s/innodb_log_file_size    = 256M/innodb_log_file_size    = $LOG_FILE_SIZE\\M/" /etc/mysql/my.cnf
+        # sed -i "s/innodb_log_buffer_size  = 512M/innodb_log_buffer_size  = $LOG_BUFFER_SIZE\\M/" /etc/mysql/my.cnf
 
         # stop mysql service to apply new InnoDB log file size
-        sudo service mysql stop
+        service mysql stop
 
         # mv previous log file
-        sudo mv /var/lib/mysql/ib_logfile0 /var/lib/mysql/ib_logfile0.bak
-        sudo mv /var/lib/mysql/ib_logfile1 /var/lib/mysql/ib_logfile1.bak
+        mv /var/lib/mysql/ib_logfile0 /var/lib/mysql/ib_logfile0.bak
+        mv /var/lib/mysql/ib_logfile1 /var/lib/mysql/ib_logfile1.bak
 
         # increase mariadb open_files_limit
         cp -f $HOME/ubuntu-nginx-web-server/etc/systemd/system/mariadb.service.d/limits.conf /etc/systemd/system/mariadb.service.d/limits.conf
@@ -576,7 +576,7 @@ if [ -z "$WO_PREVIOUS_INSTALL" ]; then
 
     if [ "$MARIADB_CLIENT_INSTALL" = "y" ]; then
         # change MySQL host to % in case of remote MySQL server
-        sudo sed -i 's/grant-host = localhost/grant-host = \%/' /etc/wo/wo.conf
+        sed -i 's/grant-host = localhost/grant-host = \%/' /etc/wo/wo.conf
     fi
 
     echo "##########################################"
@@ -601,7 +601,7 @@ if [ -z "$WO_PREVIOUS_INSTALL" ]; then
     # chown www-data:www-data /var/www
     # # update phpmyadmin with composer
     # if [ -d /var/www/22222/htdocs/db/pma ]; then
-    #     sudo -u www-data -H composer update -d /var/www/22222/htdocs/db/pma/
+    #     -u www-data -H composer update -d /var/www/22222/htdocs/db/pma/
     # fi
 
     ##################################
@@ -616,7 +616,7 @@ if [ -z "$WO_PREVIOUS_INSTALL" ]; then
 
     if [ ! -f /etc/bash_completion.d/wp-completion.bash ]; then
         # download wp-cli bash-completion
-        sudo wget -qO /etc/bash_completion.d/wp-completion.bash https://raw.githubusercontent.com/wp-cli/wp-cli/master/utils/wp-completion.bash
+        wget -qO /etc/bash_completion.d/wp-completion.bash https://raw.githubusercontent.com/wp-cli/wp-cli/master/utils/wp-completion.bash
     fi
     if [ ! -f /var/www/.profile ] && [ ! -f /var/www/.bashrc ]; then
         # create .profile & .bashrc for www-data user
@@ -624,8 +624,8 @@ if [ -z "$WO_PREVIOUS_INSTALL" ]; then
         cp -f $HOME/ubuntu-nginx-web-server/var/www/.bashrc /var/www/.bashrc
 
         # set www-data as owner
-        sudo chown www-data:www-data /var/www/.profile
-        sudo chown www-data:www-data /var/www/.bashrc
+        chown www-data:www-data /var/www/.profile
+        chown www-data:www-data /var/www/.bashrc
     fi
 
     # install nanorc for www-data
@@ -640,12 +640,12 @@ fi
 # echo " Installing php7.2-fpm"
 # echo "##########################################"
 
-# sudo apt-get install php7.2-fpm php7.2-xml php7.2-bz2 php7.2-zip php7.2-mysql php7.2-intl php7.2-gd \
+# apt-get install php7.2-fpm php7.2-xml php7.2-bz2 php7.2-zip php7.2-mysql php7.2-intl php7.2-gd \
 # php7.2-curl php7.2-soap php7.2-mbstring php7.2-xsl php7.2-bcmath -y
 
 # # copy php7.2 config files
-# sudo cp -rf $HOME/ubuntu-nginx-web-server/etc/php/7.2/* /etc/php/7.2/
-# sudo service php7.2-fpm restart
+# cp -rf $HOME/ubuntu-nginx-web-server/etc/php/7.2/* /etc/php/7.2/
+# service php7.2-fpm restart
 
 # # commit changes
 # git -C /etc/php/ add /etc/php/ && git -C /etc/php/ commit -m "add php7.2 configuration"
@@ -660,10 +660,10 @@ fi
 #     echo " Installing php7.3-fpm"
 #     echo "##########################################"
 
-#     sudo apt-get install php7.3-fpm php7.3-xml php7.3-bz2 php7.3-zip php7.3-mysql php7.3-intl php7.3-gd php7.3-curl php7.3-soap php7.3-mbstring php7.3-bcmath -y
+#     apt-get install php7.3-fpm php7.3-xml php7.3-bz2 php7.3-zip php7.3-mysql php7.3-intl php7.3-gd php7.3-curl php7.3-soap php7.3-mbstring php7.3-bcmath -y
 
-#     sudo cp -rf $HOME/ubuntu-nginx-web-server/etc/php/7.3/* /etc/php/7.3/
-#     sudo service php7.3-fpm restart
+#     cp -rf $HOME/ubuntu-nginx-web-server/etc/php/7.3/* /etc/php/7.3/
+#     service php7.3-fpm restart
 
 #     git -C /etc/php/ add /etc/php/ && git -C /etc/php/ commit -m "add php7.3 configuration"
 
@@ -714,12 +714,12 @@ git -C /etc/nginx/ add /etc/nginx/ && git -C /etc/nginx/ commit -m "update nginx
 
 # if [ -z "$CONF_22222" ]; then
 #     # add nginx reverse-proxy for netdata on https://yourserver.hostname:22222/netdata/
-#     sudo cp -f $HOME/ubuntu-nginx-web-server/etc/nginx/sites-available/22222 /etc/nginx/sites-available/22222
+#     cp -f $HOME/ubuntu-nginx-web-server/etc/nginx/sites-available/22222 /etc/nginx/sites-available/22222
 # fi
 
 # if [ -z "$CONF_UPSTREAM" ]; then
 #     # add netdata, php7.1 and php7.2 upstream
-#     sudo cp -f $HOME/ubuntu-nginx-web-server/etc/nginx/conf.d/upstream.conf /etc/nginx/conf.d/upstream.conf
+#     cp -f $HOME/ubuntu-nginx-web-server/etc/nginx/conf.d/upstream.conf /etc/nginx/conf.d/upstream.conf
 # fi
 
 VERIFY_NGINX_CONFIG=$(nginx -t 2>&1 | grep failed)
@@ -730,7 +730,7 @@ if [ -z "$VERIFY_NGINX_CONFIG" ]; then
     echo "##########################################"
     echo "Reloading Nginx"
     echo "##########################################"
-    sudo service nginx reload
+    service nginx reload
 else
     echo "##########################################"
     echo "Nginx configuration is not correct"
@@ -807,13 +807,13 @@ if [ "$PROFTPD_INSTALL" = "y" ]; then
     sed -i 's/# RequireValidShell/RequireValidShell/' /etc/proftpd/proftpd.conf
     sed -i 's/# PassivePorts                  49152 65534/PassivePorts                  49000 50000/' /etc/proftpd/proftpd.conf
 
-    sudo service proftpd restart
+    service proftpd restart
 
     if [ -d /etc/ufw ]; then
         # ftp active port
-        sudo ufw allow 21
+        ufw allow 21
         # ftp passive ports
-        sudo ufw allow 49000:50000/tcp
+        ufw allow 49000:50000/tcp
     fi
 
     if [ -d /etc/fail2ban ]; then
@@ -823,39 +823,39 @@ if [ "$PROFTPD_INSTALL" = "y" ]; then
     fi
 fi
 
-if [ "$WO_DASHBOARD_INSTALL" = "y" ]; then
+# if [ "$WO_DASHBOARD_INSTALL" = "y" ]; then
 
-    ##################################
-    # Install EasyEngine Dashboard
-    ##################################
+#     ##################################
+#     # Install EasyEngine Dashboard
+#     ##################################
 
-    echo "##########################################"
-    echo " Installing EasyEngine Dashboard"
-    echo "##########################################"
+#     echo "##########################################"
+#     echo " Installing EasyEngine Dashboard"
+#     echo "##########################################"
 
 
 
-    if [ ! -d /var/www/22222/htdocs/files ]; then
+#     if [ ! -d /var/www/22222/htdocs/files ]; then
 
-        mkdir -p /var/www/22222/htdocs/files
-        wget -qO /var/www/22222/htdocs/files/ex.zip https://extplorer.net/attachments/78/eXtplorer_2.1.12.zip
-        cd /var/www/22222/htdocs/files || exit 1
-        unzip ex.zip
-        rm ex.zip
-    fi
+#         mkdir -p /var/www/22222/htdocs/files
+#         wget -qO /var/www/22222/htdocs/files/ex.zip https://extplorer.net/attachments/78/eXtplorer_2.1.12.zip
+#         cd /var/www/22222/htdocs/files || exit 1
+#         unzip ex.zip
+#         rm ex.zip
+#     fi
 
-    cd /var/www/22222 || exit
+#     cd /var/www/22222 || exit
 
-    ## download latest version of Wordops-dashboard
-    cd /tmp || exit
-    git clone https://github.com/WordOps/wordops-dashboard.git
-    cp -rf /tmp/wordops-dashboard/* /var/www/22222/htdocs/
-    mv /tmp/wordops-dashboard/.gitignore /var/www/22222/htdocs/.gitignore
-    mv /tmp/wordops-dashboard/.git /var/www/22222/htdocs/.git
-    chown -R www-data:www-data /var/www/22222/htdocs
-    rm -rf /tmp/wordops-dashboard
+#     ## download latest version of Wordops-dashboard
+#     cd /tmp || exit
+#     git clone https://github.com/WordOps/wordops-dashboard.git
+#     cp -rf /tmp/wordops-dashboard/* /var/www/22222/htdocs/
+#     mv /tmp/wordops-dashboard/.gitignore /var/www/22222/htdocs/.gitignore
+#     mv /tmp/wordops-dashboard/.git /var/www/22222/htdocs/.git
+#     chown -R www-data:www-data /var/www/22222/htdocs
+#     rm -rf /tmp/wordops-dashboard
 
-fi
+# fi
 
 ##################################
 # Install cheat.sh
