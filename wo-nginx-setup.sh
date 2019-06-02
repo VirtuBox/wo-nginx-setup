@@ -838,7 +838,7 @@ fi
 #     if [ ! -d /var/www/22222/htdocs/files ]; then
 
 #         mkdir -p /var/www/22222/htdocs/files
-#         wget -qO /var/www/22222/htdocs/files/ex.zip https://extplorer.net/attachments/78/eXtplorer_2.1.12.zip
+#         wget -qO /var/www/22222/htdocs/files/ex.zip https://extplorer.net/attachments/download/78/eXtplorer_2.1.12.zip
 #         cd /var/www/22222/htdocs/files || exit 1
 #         unzip ex.zip
 #         rm ex.zip
