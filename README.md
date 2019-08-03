@@ -1,6 +1,12 @@
 # Bash script to automate optimized WordOps setup
 
-[![Build Status](https://travis-ci.com/VirtuBox/wo-nginx-setup.svg?branch=master)](https://travis-ci.com/VirtuBox/wo-nginx-setup) ![wo-nginx-setup](https://img.shields.io/github/license/VirtuBox/wo-nginx-setup.svg?style=flat) ![commits](https://img.shields.io/github/last-commit/virtubox/wo-nginx-setup.svg?style=flat)
+---
+
+## :warning: Not maintained 
+
+---
+
+![commits](https://img.shields.io/github/last-commit/virtubox/wo-nginx-setup.svg?style=flat)
 
 * * *
 
